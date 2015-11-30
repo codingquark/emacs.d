@@ -1,8 +1,7 @@
 (require 'package)
 (package-initialize)
-(add-to-list 'package-archives
-             '(("marmalade" . "http://marmalade-repo.org/packages/")
-               ("melpa" . "http://melpa.milkbox.net/packages/")))
+(add-to-list 'package-archives '("marmalade" . "https://marmalade-repo.org/packages/"))
+(add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/"))
 
 (require 'cl)
 
@@ -17,7 +16,8 @@
     smartparens
     smex
     switch-window
-    twittering-mode)
+    twittering-mode
+    python-mode)
   "A list of packages to ensure are installed at launch")
 
 (defun my-packages-installed-p ()
@@ -35,6 +35,7 @@
 
 
 (load-theme 'peacock t) ;; static for now, load it from somewhere else later.
+(require 'better-defaults)
 (erc-autojoin-mode t)
 (setq erc-hide-list '("JOIN" "PART" "QUIT"))
 
