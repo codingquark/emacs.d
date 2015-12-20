@@ -25,7 +25,7 @@
 (require 'erc-join)
 (erc-autojoin-mode 1)
 (setq erc-autojoin-channels-alist
-      '(("freenode.net" "#emacs")))
+      '(("freenode.net" "#emacs" "#org-mode")))
 
 (require 'erc-match)
 (setq erc-keywords '("codingquark"))

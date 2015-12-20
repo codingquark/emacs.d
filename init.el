@@ -1,6 +1,5 @@
 (require 'package)
 (package-initialize)
-(add-to-list 'package-archives '("marmalade" . "https://marmalade-repo.org/packages/"))
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/"))
 (add-to-list 'package-archives '("org" . "http://orgmode.org/elpa/") t) ;; Org-mode's repository
 (add-to-list 'load-path (expand-file-name "lisp" user-emacs-directory))
@@ -18,6 +17,8 @@
 (require 'init-smartparens)
 (require 'init-python)
 (require 'init-music)
+(require 'init-org)
+(require 'init-gnus)
 (require 'custom)
 
 ;;----------------------------------------------------------------------------

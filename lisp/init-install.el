@@ -11,6 +11,7 @@
     ido-ubiquitous
     jedi
     magit
+    markdown-mode
     popup
     pydoc-info
     elpy
@@ -18,6 +19,7 @@
     smartparens
     smex
     switch-window
+    smtpmail-multi
     twittering-mode)
   "A list of packages to ensure are installed at launch")
 
