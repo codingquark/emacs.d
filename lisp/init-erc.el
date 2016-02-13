@@ -3,9 +3,6 @@
 (erc-autojoin-mode t)
 (setq erc-hide-list '("JOIN" "PART" "QUIT"))
 
-;; god-mode - tries to avoid RSI
-(global-set-key (kbd "<escape>") 'god-mode-all)
-
 ;; better window switching
 (require 'switch-window)
 (setq-default switch-window-shortcut-style 'alphabet)

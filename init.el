@@ -17,7 +17,6 @@
 (require 'init-smartparens)
 (require 'init-python)
 (require 'init-music)
-(require 'init-org)
 (require 'init-gnus)
 (require 'custom)
 

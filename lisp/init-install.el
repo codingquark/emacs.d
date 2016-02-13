@@ -7,7 +7,6 @@
   '(auto-complete
     better-defaults
     emms
-    god-mode
     ido-ubiquitous
     jedi
     magit
@@ -20,7 +19,13 @@
     smex
     switch-window
     smtpmail-multi
-    twittering-mode)
+    twittering-mode
+    php-mode
+    web-mode
+    flymake
+    phpunit
+    auto-complete
+    restclient)
   "A list of packages to ensure are installed at launch")
 
 (defun my-packages-installed-p ()
