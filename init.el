@@ -18,6 +18,10 @@
 (require 'init-python)
 (require 'init-music)
 (require 'init-gnus)
+(require 'init-autocomplete)
+(require 'init-flycheck)
+(require 'init-magit)
+(require 'init-yas)
 (require 'custom)
 
 ;;----------------------------------------------------------------------------

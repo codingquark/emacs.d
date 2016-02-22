@@ -22,10 +22,26 @@
     twittering-mode
     php-mode
     web-mode
-    flymake
+    flycheck
     phpunit
     auto-complete
-    restclient)
+    restclient
+    dired+
+    dired-sort
+    auto-highlight-symbol
+    js2-mode
+    js3-mode
+    ac-js2
+    json-mode
+    angular-mode
+    apache-mode
+    electric-case
+    gitlab
+    hackernews
+    lorem-ipsum
+    multiple-cursors
+    phpcbf
+    regex-tool)
   "A list of packages to ensure are installed at launch")
 
 (defun my-packages-installed-p ()
