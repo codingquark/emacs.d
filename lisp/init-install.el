@@ -37,7 +37,8 @@
     hackernews
     lorem-ipsum
     multiple-cursors
-    regex-tool)
+    regex-tool
+    projectile)
   "A list of packages to ensure are installed at launch")
 
 (defun my-packages-installed-p ()
