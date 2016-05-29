@@ -22,6 +22,12 @@
 (require 'init-flycheck)
 (require 'init-magit)
 (require 'init-yas)
+(require 'init-php)
+(require 'init-dired)
+(require 'init-programming)
+(require 'init-cursors)
+(require 'init-projectile)
+(require 'init-grep)
 (require 'custom)
 
 ;;----------------------------------------------------------------------------
@@ -32,3 +38,4 @@
 
 ;;; init-local.el ends here
 
+(put 'narrow-to-region 'disabled nil)
