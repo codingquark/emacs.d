@@ -28,6 +28,7 @@
 (require 'init-cursors)
 (require 'init-projectile)
 (require 'init-grep)
+(require 'init-elfeed)
 (require 'custom)
 
 ;;----------------------------------------------------------------------------

@@ -16,13 +16,13 @@
 	    ;; disable smartparens, because no one on IRC is smart
 	    (smartparens-mode 0)
 	    ))
-(add-hook 'erc-after-connect '(lambda (SERVER NICK)
-                                (erc-message "PRIVMSG" (concat "NickServ identify " secret-erc-password)))) ;; load password from elsewhere
+;; (add-hook 'erc-after-connect '(lambda (SERVER NICK)
+;;                                 (erc-message "PRIVMSG" (concat "quote pass codingquark:" secret-erc-password)))) ;; load password from elsewhere
 
 (require 'erc-join)
 (erc-autojoin-mode 1)
-(setq erc-autojoin-channels-alist
-      '(("freenode.net" "#emacs" "#org-mode" "#archlinux" "#python")))
+;; (setq erc-autojoin-channels-alist
+;;       '(("freenode.net" "#emacs" "#org-mode" "#archlinux" "#python" "#bussard")))
 
 (require 'erc-match)
 (setq erc-keywords '("codingquark"))
@@ -52,8 +52,8 @@
   "Connect to IRC."
   (interactive)
   (when (y-or-n-p "IRC? ")
-    (erc :server "irc.freenode.net" :port 6667
-         :nick "codingquark" :full-name "Dhavan")))
+    (erc-tls :server "37.139.10.71" :port 1339
+             :nick "codingquark" :full-name "Dhavan")))
 
 ;; Apply colors to the nicks everywhere they appear.
 ;; From emacs wiki
@@ -98,5 +98,6 @@
            (cons 'foreground-color (erc-get-color-for-nick nick 't))))))))
 
 (add-hook 'erc-insert-modify-hook 'erc-highlight-nicknames)
+(add-hook 'erc-tls-insert-modify-hook 'erc-highlight-nicknames)
 
 (provide 'init-erc)

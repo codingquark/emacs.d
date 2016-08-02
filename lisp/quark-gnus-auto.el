@@ -5,7 +5,7 @@
 (defun quark-gnus-auth-sources ()
   "Return the list of all auth sources from the .authinfo[.gpg]
 Temporary wrapper around auth-source-search to avoid bug #22188 - solved in emacs25"
-  (auth-source-search :port '(25 587 993) :max 999))
+  (auth-source-search :port '(25 587 993 465) :max 999))
 
 (defun quark-gnus-preprocess-email (email)
   "Replaces charaters in email address to prepare
@@ -21,7 +21,8 @@ smtp account"
         (and port
              (or
               (string= port "25")
-              (string= port "587"))))))
+              (string= port "587")
+              (string= port "465"))))))
 
 (defun quark-gnus-is-nntp (source)
   "Naive way to determin if source from .authinfo is an nntp

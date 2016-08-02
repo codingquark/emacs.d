@@ -38,7 +38,8 @@
     lorem-ipsum
     multiple-cursors
     regex-tool
-    projectile)
+    projectile
+    elfeed)
   "A list of packages to ensure are installed at launch")
 
 (defun my-packages-installed-p ()
