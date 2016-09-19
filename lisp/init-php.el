@@ -18,7 +18,8 @@
              (setq ac-sources  '(ac-source-php ) )
              (yas-global-mode 1)
              (define-key php-mode-map  (kbd "C-]") 'ac-php-find-symbol-at-point)   ;goto define
-             ; (define-key php-mode-map  (kbd "C-t") 'ac-php-location-stack-back   ) ;go back
+                                        ; (define-key php-mode-map  (kbd "C-t") 'ac-php-location-stack-back   ) ;go back
+             (hs-minor-mode)
              ))
 
 (add-hook 'php-mode-hook 'flymake-php-load)

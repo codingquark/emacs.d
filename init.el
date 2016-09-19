@@ -29,6 +29,8 @@
 (require 'init-projectile)
 (require 'init-grep)
 (require 'init-elfeed)
+(require 'init-prog)
+(require 'init-resize-window)
 (require 'custom)
 
 ;;----------------------------------------------------------------------------
@@ -37,6 +39,6 @@
 (when (file-exists-p custom-file)
   (load custom-file))
 
-;;; init-local.el ends here
-
 (put 'narrow-to-region 'disabled nil)
+
+;;; init-local.el ends here

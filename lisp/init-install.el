@@ -34,12 +34,13 @@
     angular-mode
     apache-mode
     gitlab
-    hackernews
     lorem-ipsum
     multiple-cursors
     regex-tool
     projectile
-    elfeed)
+    elfeed
+    sicp
+    jade)
   "A list of packages to ensure are installed at launch")
 
 (defun my-packages-installed-p ()
