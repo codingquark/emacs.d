@@ -39,6 +39,4 @@
 (when (file-exists-p custom-file)
   (load custom-file))
 
-(put 'narrow-to-region 'disabled nil)
-
 ;;; init-local.el ends here
