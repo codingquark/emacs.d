@@ -49,4 +49,28 @@
 ;; cache for offline reading
 (setq gnus-use-cache t)
 
+;; Check for mails every 1 min
+(gnus-demon-add-handler 'gnus-demon-scan-news 1 t)
+(gnus-demon-init)
+(add-hook 'gnus-summary-exit-hook 'gnus-notify+)
+(add-hook 'gnus-group-catchup-group-hook 'gnus-notify+)
+(add-hook 'mail-notify-pre-hook 'gnus-notify+)
+
+;; If we go offline, demon would crash. Prevent that.
+(defadvice gnus-demon-scan-news (around gnus-demon-timeout activate)
+  "Timeout for Gnus."
+  (with-timeout
+      (120 (message "Gnus timed out."))
+    ad-do-it))
+
+;; Holy crap! This mode will show time
+;; And whenver some email arrives, it'll show a tiny icon nerby!
+;; Does not check for subdirectories, so I've kept it only for
+;; important stuff.
+(display-time-mode)
+(setq display-time-format "")
+(setq display-time-mail-directory "~/Mail/Oviyum/INBOX/new")
+(setq read-mail-command 'gnus)
+(add-hook 'gnus-group-mode-hook 'display-time-event-handler)
+
 (provide 'init-gnus)
