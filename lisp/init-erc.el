@@ -2,6 +2,7 @@
 (require 'secrets)
 (erc-autojoin-mode t)
 (setq erc-hide-list '("JOIN" "PART" "QUIT"))
+(setq erc-paranoid t)
 
 ;; better window switching
 (require 'switch-window)
@@ -12,10 +13,10 @@
 ;; ERC hook.
 ;; connects to freenode, identifies, joins channels,
 (add-hook 'erc-mode-hook
-	  (lambda()
-	    ;; disable smartparens, because no one on IRC is smart
-	    (smartparens-mode 0)
-	    ))
+          (lambda()
+            ;; disable smartparens, because no one on IRC is smart
+            (smartparens-mode 0)
+            ))
 ;; (add-hook 'erc-after-connect '(lambda (SERVER NICK)
 ;;                                 (erc-message "PRIVMSG" (concat "quote pass codingquark:" secret-erc-password)))) ;; load password from elsewhere
 
@@ -26,7 +27,14 @@
 
 (require 'erc-match)
 (setq erc-keywords '("codingquark"))
-(erc-match-mode)
+(setq erc-modules (quote
+              (autojoin button completion fill irccontrols keep-place list log match menu move-to-prompt netsplit networks noncommands notifications readonly ring stamp spelling track)))
+;; (erc-match-mode)
+(setq erc-pals
+   (quote
+    ("twb" "thebigj" "technomancy" "forcer" "wasamasa" "parjanya" "JordiGH" "parsnip")))
+(setq erc-timestamp-intangible t)
+(setq erc-timestamp-right-column 80)
 
 (add-hook 'erc-mode-hook
           '(lambda ()
@@ -52,52 +60,9 @@
   "Connect to IRC."
   (interactive)
   (when (y-or-n-p "IRC? ")
-    (erc-tls :server "37.139.10.71" :port 1339
-             :nick "codingquark" :full-name "Dhavan")))
-
-;; Apply colors to the nicks everywhere they appear.
-;; From emacs wiki
-(defmacro unpack-color (color red green blue &rest body)
-  `(let ((,red   (car ,color))
-         (,green (car (cdr ,color)))
-         (,blue  (car (cdr (cdr ,color)))))
-     ,@body))
-
-(defun rgb-to-html (color)
-  (unpack-color color red green blue
-   (concat "#" (format "%02x%02x%02x" red green blue))))
-
-(defun hexcolor-luminance (color)
-  (unpack-color color red green blue
-   (floor (+ (* 0.299 red) (* 0.587 green) (* 0.114 blue)))))
-
-(defun invert-color (color)
-  (unpack-color color red green blue
-   `(,(- 255 red) ,(- 255 green) ,(- 255 blue))))
-
-(defun erc-get-color-for-nick (nick dark)
-  (let* ((hash     (md5 (downcase nick)))
-         (red      (mod (string-to-number (substring hash 0 10) 16) 256))
-         (blue     (mod (string-to-number (substring hash 10 20) 16) 256))
-         (green    (mod (string-to-number (substring hash 20 30) 16) 256))
-         (color    `(,red ,green ,blue)))
-    (rgb-to-html (if (if dark (< (hexcolor-luminance color) 85)
-                       (> (hexcolor-luminance color) 170))
-                     (invert-color color)
-                   color))))
-
-(defun erc-highlight-nicknames ()
-  (save-excursion
-    (goto-char (point-min))
-    (while (re-search-forward "\\w+" nil t)
-      (let* ((bounds (bounds-of-thing-at-point 'symbol))
-             (nick   (buffer-substring-no-properties (car bounds) (cdr bounds))))
-        (when (erc-get-server-user nick)
-          (put-text-property
-           (car bounds) (cdr bounds) 'face
-           (cons 'foreground-color (erc-get-color-for-nick nick 't))))))))
-
-(add-hook 'erc-insert-modify-hook 'erc-highlight-nicknames)
-(add-hook 'erc-tls-insert-modify-hook 'erc-highlight-nicknames)
+    (erc-tls :server "37.139.10.71"
+             :port 1339
+             :nick "codingquark"
+             :full-name "Dhavan")))
 
 (provide 'init-erc)

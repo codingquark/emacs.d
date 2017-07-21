@@ -41,6 +41,7 @@ account"
   (let ((host (plist-get source :host))
         (port (plist-get source :port)))
     (or (and host (or (string-match "^imap\\." host)
+                      (string-match "^imappro\\." host)
                       (string-match "@gmail" host)))
         (and port
              (or
@@ -62,15 +63,14 @@ If port is 587 use starttls encryption."
              (port-from-source (plist-get source :port))
              (port (if port-from-source port-from-source "25")))
         (push
-         `(,(intern (quark-gnus-preprocess-email user)).
-           (,user
+         `(,user
             ,host
             ,(string-to-number port)
             ,user
             ,(if (string= port "587") 'starttls 't)
-            nil nil nil))
+            nil nil nil)
          accounts)))
-    `(setq smtp-multi-accounts (quote ,(reverse accounts)))))
+    `(setq smtpmail-multi-accounts (quote ,(reverse accounts)))))
 
 (defun quark-gnus-create-smtpmail-multi-associations (smtps)
   "Given the SMTPS - list of smtp accounts from authinfo, create

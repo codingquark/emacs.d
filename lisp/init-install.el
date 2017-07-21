@@ -19,7 +19,6 @@
     smex
     switch-window
     smtpmail-multi
-    twittering-mode
     php-mode
     web-mode
     flycheck
@@ -29,19 +28,18 @@
     dired+
     auto-highlight-symbol
     js2-mode
-    js3-mode
     json-mode
     angular-mode
     apache-mode
-    gitlab
     lorem-ipsum
     multiple-cursors
     regex-tool
     projectile
-    elfeed
     sicp
-    jade)
-  "A list of packages to ensure are installed at launch")
+    jade
+    org-bullets
+    pdf-tools)
+  "A list of packages to ensure are installed at launch.")
 
 (defun my-packages-installed-p ()
   (loop for p in my-packages

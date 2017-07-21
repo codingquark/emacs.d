@@ -67,10 +67,11 @@
 ;; And whenver some email arrives, it'll show a tiny icon nerby!
 ;; Does not check for subdirectories, so I've kept it only for
 ;; important stuff.
-(display-time-mode)
-(setq display-time-format "")
+;; (setq display-time-format "")
 (setq display-time-mail-directory "~/Mail/Oviyum/INBOX/new")
 (setq read-mail-command 'gnus)
+(setq display-time-interval 30)
+(display-time-mode)
 (add-hook 'gnus-group-mode-hook 'display-time-event-handler)
 
 (provide 'init-gnus)

@@ -101,7 +101,7 @@
   "Face for highlighting gnus news number in mode line"
   :group 'gnus-notify+)
 
-(defcustom gnus-notify+-modeline-string "Gnus"
+(defcustom gnus-notify+-modeline-string "Mails"
   "The string that notify in modeline."
   :type 'string
   :group 'gnus-notify+)

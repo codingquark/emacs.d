@@ -29,9 +29,10 @@
 (require 'init-cursors)
 (require 'init-projectile)
 (require 'init-grep)
-(require 'init-elfeed)
 (require 'init-prog)
 (require 'init-resize-window)
+(require 'init-alarm)
+(require 'init-org)
 (require 'custom)
 
 ;;----------------------------------------------------------------------------
