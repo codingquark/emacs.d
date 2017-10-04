@@ -38,11 +38,12 @@
     multiple-cursors
     regex-tool
     projectile
-    sicp
-    jade
     org-bullets
     pdf-tools
-    arch-packer)
+    arch-packer
+    elfeed
+    w3m
+    stumpwm-mode)
   "A list of packages to ensure are installed at launch.")
 
 (defun my-packages-installed-p ()
