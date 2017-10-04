@@ -28,7 +28,7 @@
 (require 'init-python)
 (require 'init-music)
 (require 'init-gnus)
-(require 'gnus-notify+)
+;; (require 'gnus-notify+)
 (require 'init-autocomplete)
 (require 'init-flycheck)
 (require 'init-magit)
