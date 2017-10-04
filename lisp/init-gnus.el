@@ -73,5 +73,6 @@
 (setq display-time-interval 30)
 (display-time-mode)
 (add-hook 'gnus-group-mode-hook 'display-time-event-handler)
+(gnus-select-account-enable)
 
 (provide 'init-gnus)
