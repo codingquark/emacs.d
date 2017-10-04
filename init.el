@@ -43,6 +43,12 @@
 (require 'init-resize-window)
 (require 'init-alarm)
 (require 'init-org)
+(require 'init-switchwindow)
+(require 'init-arch)
+(require 'init-elfeed)
+(require 'init-browser)
+(require 'init-mutt)
+(require 'init-stumpwm)
 (require 'custom)
 
 ;;----------------------------------------------------------------------------
@@ -51,4 +57,6 @@
 (when (file-exists-p custom-file)
   (load custom-file))
 
-;;; init-local.el ends here
+(server-start)
+
+;;; init.el ends here
