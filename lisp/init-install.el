@@ -20,6 +20,9 @@
     switch-window
     smtpmail-multi
     php-mode
+    php-auto-yasnippets
+    flymake-php
+    diff-hl
     web-mode
     flycheck
     phpunit
