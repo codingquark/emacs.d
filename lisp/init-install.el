@@ -43,7 +43,8 @@
     arch-packer
     elfeed
     w3m
-    stumpwm-mode)
+    stumpwm-mode
+    grizzl)
   "A list of packages to ensure are installed at launch.")
 
 (defun my-packages-installed-p ()
