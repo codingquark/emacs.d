@@ -31,5 +31,8 @@
 ;; add to export hook
 (add-hook 'org-export-before-processing-hook 'delete-org-comments)
 
+;; Large LaTeX previews
+;; (setq org-format-latex-options (plist-put org-format-latex-options :scale 2))
+
 (provide 'init-org)
 ;;; init-org ends here
