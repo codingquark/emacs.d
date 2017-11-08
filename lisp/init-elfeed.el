@@ -9,6 +9,7 @@
         "http://blog.stephenwolfram.com/feed/"
         "https://www.lightbluetouchpaper.org/feed/"
         "https://tanninpower.wordpress.com/feed/"
-        "http://blog.jaysinh.com/feed.xml"))
+        "http://blog.jaysinh.com/feed.xml"
+        "esr.ibiblio.org/?feed=rss2"))
 
 (provide 'init-elfeed)
