@@ -15,7 +15,7 @@
 (setq custom-file (expand-file-name "custom.el" user-emacs-directory))
 (setq inhibit-startup-screen t)
 (setq initial-scratch-message nil)
-(setq initial-major-mode 'text-mode)
+(setq initial-major-mode 'org-mode)
 
 ;; (setq sentence-end-base "[.?!।][]\"'”)}]*") ;; Try this if you happen to open Hindi
 
@@ -26,8 +26,9 @@
 (require 'init-ido)
 (require 'init-smartparens)
 (require 'init-python)
-(require 'init-music)
-(require 'init-gnus)
+;; (require 'init-music)
+;; Trying mu4e
+;; (require 'init-gnus)
 ;; (require 'gnus-notify+)
 (require 'init-autocomplete)
 (require 'init-flycheck)
@@ -44,12 +45,18 @@
 (require 'init-alarm)
 (require 'init-org)
 (require 'init-switchwindow)
-(require 'init-arch)
+;; (require 'init-arch)
 (require 'init-elfeed)
 (require 'init-browser)
 (require 'init-mutt)
 (require 'init-stumpwm)
+(require 'init-mu4e)
+(require 'init-nov)
 (require 'custom)
+
+(setq pomidor-sound-tick nil
+      pomidor-sound-tack nil
+      pomidor-sound-overwork nil)
 
 ;;----------------------------------------------------------------------------
 ;; Variables configured via the interactive 'customize' interface

@@ -22,10 +22,10 @@
 (setq erc-keywords '("codingquark"))
 (setq erc-modules (quote
               (autojoin button completion fill irccontrols keep-place list log match menu move-to-prompt netsplit networks noncommands notifications readonly ring stamp spelling track)))
-;; (erc-match-mode)
+(erc-match-mode)
 (setq erc-pals
-   (quote
-    ("twb" "thebigj" "technomancy" "forcer" "wasamasa" "parjanya" "JordiGH" "parsnip")))
+      (quote
+       ("twb" "thebigj" "technomancy" "forcer" "wasamasa" "parjanya" "JordiGH" "parsnip" "oshor")))
 (setq erc-timestamp-intangible t)
 (setq erc-timestamp-right-column 80)
 

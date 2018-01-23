@@ -1,4 +1,4 @@
 (require 'stumpwm-mode)
-(setq stumpwm-shell-program "/usr/share/stumpwm/contrib/util/stumpish/stumpish")
+(setq stumpwm-shell-program "/home/codingquark/workspace/stumpwm-contrib/util/stumpish/stumpish")
 
 (provide 'init-stumpwm)

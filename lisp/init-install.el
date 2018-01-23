@@ -6,7 +6,6 @@
 (defvar my-packages
   '(auto-complete
     better-defaults
-    emms
     ido-ubiquitous
     jedi
     magit
@@ -27,9 +26,9 @@
     flycheck
     phpunit
     auto-complete
-    restclient
+    ;; restclient
     dired+
-    auto-highlight-symbol
+    ;; auto-highlight-symbol
     js2-mode
     json-mode
     angular-mode
@@ -40,11 +39,21 @@
     projectile
     org-bullets
     pdf-tools
-    arch-packer
     elfeed
     w3m
     stumpwm-mode
-    grizzl)
+    grizzl
+    auctex
+    flycheck-ledger
+    flymake-json
+    gnus-select-account
+    hyde
+    ledger-mode
+    ;; mu4e -- installing it from Debian repo.
+    mu4e-alert
+    nov
+    pomidor
+    swiper)
   "A list of packages to ensure are installed at launch.")
 
 (defun my-packages-installed-p ()
