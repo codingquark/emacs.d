@@ -14,4 +14,11 @@
 (add-to-list 'default-frame-alist '(font . "Source Code Pro-10" ))
 (set-face-attribute 'default t :font "Source Code Pro-10")
 
+(defun extract-titles-from-arxiv ()
+  "Extract titles of papers from arxiv subscription emails.
+Uses `occur` in doing so with a regexp."
+  (interactive)
+  (occur "^Title:.*\\Ca.*Authors"))
+
 (provide 'init-programming)
+;;; init-programming ends here
