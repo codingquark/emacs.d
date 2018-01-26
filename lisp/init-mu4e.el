@@ -38,11 +38,13 @@
 ;; default is to ask
 ;; (setq mu4e-compose-context-policy nil)
 
-(setq mu4e-maildir "~/Mail/Codingquark"
-      mu4e-sent-folder "/Sent"
-      mu4e-drafts-folder "/Drafts"
-      mu4e-trash-folder "/Trash"
-      mu4e-refile-folder "/archive")
+(setq mu4e-maildir "~/Mail"
+      mu4e-sent-folder "/Codingquark/Sent"
+      mu4e-drafts-folder "/Codingquark/Drafts"
+      mu4e-trash-folder "/Codingquark/Trash"
+      mu4e-refile-folder "/Codingquark/archive")
+
+(setq mu4e-user-mail-address-list '("dhavan@oviyum.com" "quark@codingquark.com"))
 
 
 (setq mu4e-contexts
@@ -60,7 +62,10 @@
                    (mu4e-compose-signature .
                                            (concat
                                             "D Vaidya"))
-                   (mu4e-maildir           . "~/Mail/Codingquark")))
+                   (mu4e-sent-folder       . "/Codingquark/Sent")
+                   (mu4e-drafts-folder     . "/Codingquark/Drafts")
+                   (mu4e-trash-folder      . "/Codingquark/Trash")
+                   (mu4e-refile-folder     . "/Codingquark/archive")))
          ,(make-mu4e-context
            :name "Work"
            :enter-func (lambda () (mu4e-message "Entering Work context"))
@@ -75,7 +80,10 @@
                    (mu4e-compose-signature .
                                            (concat
                                             "Dhavan"))
-                   (mu4e-maildir           . "~/Mail/Oviyum")))))
+                   (mu4e-sent-folder       . "/Oviyum/Sent")
+                   (mu4e-drafts-folder     . "/Oviyum/Drafts")
+                   (mu4e-trash-folder      . "/Oviyum/Trash")
+                   (mu4e-refile-folder     . "/Oviyum/archive")))))
 
 (setq mu4e-use-fancy-chars t)
 (setq mu4e-headers-draft-mark     '("D" . "⚒")
