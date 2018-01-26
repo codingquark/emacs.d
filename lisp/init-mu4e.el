@@ -4,7 +4,22 @@
 ;; No need to run `mu4e-update-index` periodically.
 (setq mu4e-get-mail-command "/usr/bin/offlineimap -o -u syslog"
       mu4e-update-interval (* 3 60)
-      mu4e-index-cleanup nil)
+      mu4e-index-cleanup t)
+
+;; Suppress the minibuf messages for updates, kind of annoying
+(defun suppress-messages (old-fun &rest args)
+  (cl-flet ((silence (&rest args) (ignore)))
+    (advice-add 'message :around #'silence)
+    (unwind-protect
+     (apply old-fun args)
+     (advice-remove 'message #'silence))))
+
+(with-eval-after-load "mu4e"
+  (advice-add 'mu4e-update-mail-and-index :around #'suppress-messages)
+  (advice-add 'mu4e-indnex-message :around #'suppress-messages)
+  (advice-add 'progress-reporter-done :around #'suppress-messages))
+
+(setq mu4e-hide-index-messages t)
 
 ;; Get alerts after receiving the mails
 (mu4e-alert-set-default-style 'notifications)
