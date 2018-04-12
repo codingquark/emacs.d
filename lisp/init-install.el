@@ -32,7 +32,6 @@
     js2-mode
     json-mode
     angular-mode
-    apache-mode
     lorem-ipsum
     multiple-cursors
     regex-tool
