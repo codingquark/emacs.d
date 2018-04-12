@@ -10,6 +10,8 @@
         "https://www.lightbluetouchpaper.org/feed/"
         "https://tanninpower.wordpress.com/feed/"
         "http://blog.jaysinh.com/feed.xml"
-        "esr.ibiblio.org/?feed=rss2"))
+        "esr.ibiblio.org/?feed=rss2"
+        "http://idevji.com/feed"
+        "http://jordi.inversethought.com/feed/"))
 
 (provide 'init-elfeed)
