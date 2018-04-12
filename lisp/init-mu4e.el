@@ -58,6 +58,7 @@
                            (mu4e-message-contact-field-matches msg
                                                                :to "quark@codingquark.com")))
            :vars '((user-mail-address      . "quark@codingquark.com")
+                   (smtpmail-smtp-user     . "quark@codingquark.com")
                    (user-full-name         . "Dhavan Vaidya")
                    (mu4e-compose-signature .
                                            (concat
@@ -76,6 +77,7 @@
                            (mu4e-message-contact-field-matches msg
                                                                :to "dhavan@oviyum.com")))
            :vars '((user-mail-address      . "dhavan@oviyum.com")
+                   (smtpmail-smtp-user     . "dhavan@oviyum.com")
                    (user-full-name         . "Dhavan V")
                    (mu4e-compose-signature .
                                            (concat
