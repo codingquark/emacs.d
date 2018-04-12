@@ -15,7 +15,7 @@
 ;; default sending method - using internal smtp client
 ;; with the smtpmail-multi package to handle multiple email
 ;; accounts
-(setq message-send-mail-function 'smtpmail-multi-send-it)
+;; (setq message-send-mail-function 'smtpmail-multi-send-it)
 
 ;; and workaround for Gmail folders
 (setq gnus-ignored-newsgroups "^to\\.\\|^[0-9. ]+\\( \\|$\\)\\|^[\"]\"[#'()]")
@@ -68,11 +68,11 @@
 ;; Does not check for subdirectories, so I've kept it only for
 ;; important stuff.
 ;; (setq display-time-format "")
-(setq display-time-mail-directory "~/Mail/Oviyum/INBOX/new")
-(setq read-mail-command 'gnus)
-(setq display-time-interval 30)
-(display-time-mode)
-(add-hook 'gnus-group-mode-hook 'display-time-event-handler)
+;; (setq display-time-mail-directory "~/Mail/Oviyum/INBOX/new")
+;; (setq read-mail-command 'gnus)
+;; (setq display-time-interval 30)
+;; (display-time-mode)
+;; (add-hook 'gnus-group-mode-hook 'display-time-event-handler)
 (gnus-select-account-enable)
 
 (provide 'init-gnus)
