@@ -12,6 +12,7 @@
         "http://blog.jaysinh.com/feed.xml"
         "esr.ibiblio.org/?feed=rss2"
         "http://idevji.com/feed"
+        "http://jordi.inversethought.com/feed/"
         "http://www.shakthimaan.com/news.xml"
         "https://static.fsf.org/fsforg/rss/blogs.xml"
         "http://technomancy.us/feed/atom.xml"))
