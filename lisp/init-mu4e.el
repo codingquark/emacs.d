@@ -1,5 +1,9 @@
 (require 'mu4e)
 
+;; We definitely need a keybinding now.
+(global-set-key (kbd "C-c m") 'mu4e)
+
+
 ;; Let's fetch the mails!
 ;; No need to run `mu4e-update-index` periodically.
 (setq mu4e-get-mail-command "/usr/bin/offlineimap -o -u syslog"
