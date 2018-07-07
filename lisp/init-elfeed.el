@@ -15,6 +15,7 @@
         "http://jordi.inversethought.com/feed/"
         "http://www.shakthimaan.com/news.xml"
         "https://static.fsf.org/fsforg/rss/blogs.xml"
-        "http://technomancy.us/feed/atom.xml"))
+        "http://technomancy.us/feed/atom.xml"
+        "http://www.aidalgolland.net/feed.xml"))
 
 (provide 'init-elfeed)
