@@ -13,6 +13,7 @@
     popup
     pydoc-info
     elpy
+    anaconda-mode
     resize-window
     smartparens
     smex
@@ -24,15 +25,15 @@
     diff-hl
     web-mode
     flycheck
-    phpunit
+    ;; phpunit
     auto-complete
     ;; restclient
     dired+
     ;; auto-highlight-symbol
     js2-mode
     json-mode
-    angular-mode
-    lorem-ipsum
+    ;; angular-mode
+    ;; lorem-ipsum
     multiple-cursors
     regex-tool
     projectile
@@ -52,7 +53,12 @@
     mu4e-alert
     nov
     pomidor
-    swiper)
+    swiper
+    debbugs
+    dpkg-dev-el
+    counsel
+    ivy
+    elfeed-protocol)
   "A list of packages to ensure are installed at launch.")
 
 (defun my-packages-installed-p ()

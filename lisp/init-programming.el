@@ -1,18 +1,25 @@
 ;;(require 'auto-highlight-symbol)
 
-(add-to-list 'auto-mode-alist '("client/scripts/.+\\.js\\'" . angular-mode))
-(add-to-list 'auto-mode-alist '("\\.html\\'" . web-mode))
-(add-to-list 'auto-mode-alist '("resources/views/.+\\.php\\'" . web-mode))
 (global-set-key (kbd "C-c g") 'rgrep)
-(setq-default line-spacing 5) ;; Checkout `line-height` instead
+
 (diff-hl-mode 1)
 (diff-hl-dired-mode 1)
-(add-hook 'magit-post-refresh-hook 'diff-hl-magit-post-refresh)
 (global-auto-revert-mode 1)
+
+;; (setq-default line-spacing 5) ;; Checkout `line-height` instead
+
+;; (set-face-attribute 'default t :font "Source Code Pro-11")
+(set-face-attribute 'default t :font "iosevka curly extended-11")
+;; The following will change the current frame's fonts
+;; (set-frame-font "Iosevka Curly Extended-11" nil t)
+
+(add-hook 'magit-post-refresh-hook 'diff-hl-magit-post-refresh)
 (add-hook 'dired-mode-hook 'auto-revert-mode)
 
-(add-to-list 'default-frame-alist '(font . "Source Code Pro-10" ))
-(set-face-attribute 'default t :font "Source Code Pro-10")
+;; (add-to-list 'default-frame-alist '(font . "Source Code Pro-11" ))
+(add-to-list 'default-frame-alist '(font . "iosevka curly extended-11" ))
+
+;; (set-fontset-font t nil (font-spec :size 11 :name "Noto"))
 
 (defun extract-titles-from-arxiv ()
   "Extract titles of papers from arxiv subscription emails.

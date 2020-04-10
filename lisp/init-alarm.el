@@ -1,10 +1,10 @@
 ;; Taken from https://lists.gnu.org/archive/html/help-gnu-emacs/2006-06/msg00382.html
 
 (defvar alarm-clock-timer nil
-  "Keep timer so that the user can cancel the alarm")
+  "Keep timer so that the user can cancel the alarm.")
 
 (defun alarm-clock-message (text)
-  "The actual alarm action"
+  "The actual alarm action."
   (message-box text))
 
 (defun alarm-clock ()
@@ -17,8 +17,9 @@ example \"11:30am\"."
     (setq alarm-clock-timer (run-at-time time nil 'alarm-clock-message text))))
 
 (defun alarm-clock-cancel ()
-  "Cancel the alarm clock"
+  "Cancel the alarm clock."
   (interactive)
   (cancel-timer alarm-clock-timer))
 
 (provide 'init-alarm)
+;;; init-alarm.el ends here
