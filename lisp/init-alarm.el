@@ -4,8 +4,10 @@
   "Keep timer so that the user can cancel the alarm.")
 
 (defun alarm-clock-message (text)
-  "The actual alarm action."
-  (message-box text))
+  "The alarm is notified about showing TEXT."
+  (notifications-notify
+   :title "Alarm!"
+   :body text))
 
 (defun alarm-clock ()
   "Set an alarm.
