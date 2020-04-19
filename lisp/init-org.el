@@ -66,6 +66,8 @@
     (turn-on-flyspell)
     (auto-fill-mode 1)))
 (add-hook 'org-mode-hook 'auto-fill-org-mode-hook)
+(with-eval-after-load 'org
+  (define-key org-mode-map (kbd "C-c C-q") #'counsel-org-tag))
 
 ;; Large LaTeX previews
 ;; (setq org-format-latex-options (plist-put org-format-latex-options :scale 2))
