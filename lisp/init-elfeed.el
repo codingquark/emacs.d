@@ -32,8 +32,9 @@
 (setq elfeed-feeds
       '(
         ("youwannaknowright"
-         :password (shell-command-to-string "pass --clip personal/Root/Important/Freedombox")
-         )))
+         :password (car (split-string  ;; car is valid because pass makes sure the first line is always the secret
+                         (shell-command-to-string "pass personal/Root/Important/Freedombox")
+                         "\n")))))
 
 (setq elfeed-log-level 'debug)
 
