@@ -59,6 +59,7 @@
 ;; (require 'init-pomodoro)
 ;; (require 'init-todoist)
 (require 'init-theme)
+(require 'init-emms)
 (require 'custom)
 (require 'init-exwm)
 

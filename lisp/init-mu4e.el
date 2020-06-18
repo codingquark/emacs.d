@@ -20,7 +20,7 @@
 
 (with-eval-after-load "mu4e"
   (advice-add 'mu4e-update-mail-and-index :around #'suppress-messages)
-  (advice-add 'mu4e-indnex-message :around #'suppress-messages)
+  (advice-add 'mu4e-index-message :around #'suppress-messages)
   (advice-add 'progress-reporter-done :around #'suppress-messages))
 
 (setq mu4e-hide-index-messages t)
