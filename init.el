@@ -27,9 +27,8 @@
 
 ;; (require 'init-install)
 (use-package better-defaults)
-(use-package znc
-  :if (boundp 'znc-password)
-  :init
+
+(use-package erc
   :bind ("C-c i e" . (lambda () (interactive) (switch-to-buffer "#emacs")))
   :config
   (setq erc-hide-list '("JOIN" "PART" "QUIT"))
@@ -37,7 +36,7 @@
   (erc-autojoin-mode 1)
   ;; (setq erc-pals
   ;;       '("twb" "thebigj" "technomancy" "forcer" "wasamasa" "parjanya" "JordiGH" "parsnip" "oshor" "mbuf" "aidalgol" "bremner"))
-  ;; (setq erc-keywords '("codingquark" "codingquark_"))
+  (setq erc-keywords '("codingquark" "codingquark_"))
   (setq erc-max-buffer-size 20000)
   (setq erc-truncate-buffer-on-save t)
   (erc-completion-mode t)
@@ -118,7 +117,9 @@
 
 (use-package hl-line
   :hook ((prog-mode . global-hl-line-mode)
-         (prog-mode . global-diff-hl-mode)))
+         (prog-mode . global-diff-hl-mode))
+  :config
+  (global-hl-line-mode))
 
 (use-package autorevert
   :init
@@ -147,6 +148,8 @@
          (org-mode . auto-fill-mode))
   :config
   (setq org-directory "~/Documents/org")
+  (setq org-brain-path (concat org-directory "/brain")) ;; No need to do that as it defaults to org-directory/brain
+  (setq org-id-locations-file (concat user-emacs-directory "/.org-id-locations"))
   (setq org-archive-location "~/Documents/org/archive.org::* From %s")
   (setq org-default-notes-file (concat org-directory "/notes.org"))
   (setq org-agenda-files (list (concat org-directory "/todo.org")))
@@ -201,12 +204,12 @@
 (use-package org-brain
   :bind ("C-c b" . org-brain-visualize)
   :config
-  (setq org-brain-path (concat org-directory "/brain")) ;; No need to do that as it defaults to org-directory/brain
+  ;; (setq org-brain-path (concat org-directory "/brain")) ;; No need to do that as it defaults to org-directory/brain
   (setq org-id-track-globally t)  ;; this is t by default, merely making sure
   (setq org-id-locations-file (concat user-emacs-directory "/.org-id-locations"))
   (setq org-brain-show-resources t))  ;; Clean org-brain-visualize
 
-(use-package switch-winidow
+(use-package switch-window
   :bind ("C-x o" . switch-window)
   :config
   (setq switch-window-shortcut-style 'alphabet))
@@ -457,10 +460,10 @@
     (shell-command "xbacklight"))
   (defun dimmest ()
     (interactive)
-    (start-process-shell-command "xbacklight" nil "xbacklight -set 30")
-    (defun switch-to-scratch ()
-      (interactive)
-      (switch-to-buffer "*scratch*")))
+    (start-process-shell-command "xbacklight" nil "xbacklight -set 30"))
+  (defun switch-to-scratch ()
+    (interactive)
+    (switch-to-buffer "*scratch*"))
   (add-hook 'exwm-update-class-hook
             (lambda ()
               (unless (or (string-prefix-p  "sun-awt-X11-" exwm-instance-name)
