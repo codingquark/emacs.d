@@ -42,7 +42,8 @@
   (erc-completion-mode t)
   (erc-match-mode t)
   (erc-hl-nicks-enable)
-  (setq erc-modules
+  (setq erc-prompt (lambda () (concat "[" (buffer-name) "]"))
+        erc-modules
         '(autojoin
           button
           completion
