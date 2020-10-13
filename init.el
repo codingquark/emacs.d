@@ -140,7 +140,7 @@
 (use-package resize-window
   :bind ("C-c ;" . resize-window))
 
-(use-package org-mode
+(use-package org
   :bind (("C-c c" . org-capture)
          ("C-c a" . org-agenda)
          ("C-c C-q" . counsel-org-tag))
