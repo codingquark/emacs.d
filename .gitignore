@@ -1,0 +1,77 @@
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# Org-mode
+.org-id-locations
+*_archive
+
+# Flycheck
+flycheck_*.el
+
+# Server auth directory
+/server/
+
+# Network security
+/network-security.data
+
+# Bookmarks
+/bookmarks
+
+# Recent files
+/recentf
+
+# Undo-tree
+*.~undo-tree~
+
+# Projectile
+.projectile
+
+# Directory configuration
+.dir-locals.el
+
+# Compiled
+*.elc
+
+# Packaging
+.cask/
+dist/
+
+# Backup files
+*~
+
+# Undo-tree save-files
+*.~undo-tree~
+
+# Url cache
+/url/
+
+# Smex
+/smex-items
+
+# Eshell history
+/eshell/history
+/eshell/lastdir
+
+# Elpa packages
+/elpa/
+/straight/
+
+# Package-Quickstart
+package-quickstart.el
+
+# BBDB
+.bbdb
+
+# Custom file
+custom.el
+
+# Backups
+backups/
+auto-save-list/
