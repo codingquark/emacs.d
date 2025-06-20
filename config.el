@@ -39,8 +39,8 @@
   (setq-default tab-width 2)
   
   ;; File management
-  (setq backup-directory-alist '(("." . "~/.emacs.d/backups")))
-  (setq auto-save-file-name-transforms '((".*" "~/.emacs.d/auto-save-list/" t)))
+  (setq backup-directory-alist '(("." . "~/.config/emacs/backups")))
+  (setq auto-save-file-name-transforms '((".*" "~/.config/emacs/auto-save-list/" t)))
   
   ;; Visual aids
   (global-display-line-numbers-mode 1)
@@ -95,6 +95,12 @@
 
 (use-package denote-menu
   :after denote)
+
+(use-package olivetti
+  :hook ((text-mode . olivetti-mode)
+         (org-mode . olivetti-mode))
+  :config
+  (setq olivetti-body-width 80))
 
 (use-package markdown-mode
   :mode (("README\\.md\\'" . gfm-mode)

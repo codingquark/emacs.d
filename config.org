@@ -142,7 +142,21 @@ Configure Denote for simple note-taking and knowledge management.
   :after denote)
 #+END_SRC
 
-* Markdown
+* Writing
+
+** Olivetti Mode
+
+Configure olivetti for distraction-free writing with centered text.
+
+#+BEGIN_SRC emacs-lisp
+(use-package olivetti
+  :hook ((text-mode . olivetti-mode)
+         (org-mode . olivetti-mode))
+  :config
+  (setq olivetti-body-width 80))
+#+END_SRC
+
+** Markdown
 
 Configure markdown-mode for editing markdown files.
 
