@@ -20,10 +20,7 @@
   ;; Startup configuration
   (setq inhibit-startup-message t)
   (setq initial-major-mode 'org-mode)
-  (setq initial-scratch-message "")
-  
-  ;; Start in denote directory
-  (setq initial-buffer-choice (lambda () (dired "~/Documents/notes"))))
+  (setq initial-scratch-message ""))
 
 (use-package modus-themes
   :init
@@ -72,7 +69,7 @@
     ("C-c n f b" . denote-find-backlink)
     ("C-c n r" . denote-rename-file)
     ("C-c n R" . denote-rename-file-using-front-matter)
-    ;; ("C-c n ." . cq-insert-time-stamp)
+    ("C-c n ." . cq-insert-time-stamp)
     )
   :custom
   (denote-directory "~/Documents/notes")
@@ -96,6 +93,9 @@
 (use-package denote-menu
   :after denote)
 
+(use-package denote-markdown
+  :after denote)
+
 (use-package olivetti
   :hook ((text-mode . olivetti-mode)
          (org-mode . olivetti-mode))
@@ -106,4 +106,4 @@
   :mode (("README\\.md\\'" . gfm-mode)
          ("\\.md\\'" . markdown-mode)
          ("\\.markdown\\'" . markdown-mode))
-  :init (setq markdown-command "multimarkdown"))
+  :init (setq markdown-command "markdown"))

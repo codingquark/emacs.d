@@ -35,10 +35,7 @@ Clean up the interface by removing unnecessary UI elements and configuring the s
   ;; Startup configuration
   (setq inhibit-startup-message t)
   (setq initial-major-mode 'org-mode)
-  (setq initial-scratch-message "")
-  
-  ;; Start in denote directory
-  (setq initial-buffer-choice (lambda () (dired "~/Documents/notes"))))
+  (setq initial-scratch-message ""))
 #+END_SRC
 
 * Theme
@@ -104,42 +101,46 @@ Configure dired with denote integration.
 Configure Denote for simple note-taking and knowledge management.
 
 #+BEGIN_SRC emacs-lisp
-(use-package denote
-  :hook (find-file . denote-fontify-links-mode)
-  :bind (
-    ("C-c n j" . denote-journal-new-or-existing-entry)
-    ("C-c n n" . denote)
-    ("C-c n D" . cq-open-denote-directory)
-    ("C-c n N" . denote-type)
-    ("C-c n i" . denote-link)
-    ("C-c n I" . denote-add-links)
-    ("C-c n b" . denote-backlinks)
-    ("C-c n f b" . denote-find-backlink)
-    ("C-c n r" . denote-rename-file)
-    ("C-c n R" . denote-rename-file-using-front-matter)
-    ;; ("C-c n ." . cq-insert-time-stamp)
-    )
-  :custom
-  (denote-directory "~/Documents/notes")
-  (denote-infer-keywords t)
-  (denote-sort-keywords t)
-  (denote-file-type 'text)
-  (denote-prompts '(title keywords))
-  (denote-journal-extras-title-format 'day-date-month-year)
-  :config
-  (setq crm-separator ",")
-  (require 'denote-journal)
-  (defun cq-open-denote-directory ()
-    (interactive)
-    (revert-buffer (dired denote-directory)))
-  (defun cq-insert-time-stamp ()
-    "Insert a timestamp with a newline character."
-    (interactive)
-    (insert (current-time-string))
-    (newline)))
+  (use-package denote
+    :hook (find-file . denote-fontify-links-mode)
+    :bind (
+      ("C-c n j" . denote-journal-new-or-existing-entry)
+      ("C-c n n" . denote)
+      ("C-c n D" . cq-open-denote-directory)
+      ("C-c n N" . denote-type)
+      ("C-c n i" . denote-link)
+      ("C-c n I" . denote-add-links)
+      ("C-c n b" . denote-backlinks)
+      ("C-c n f b" . denote-find-backlink)
+      ("C-c n r" . denote-rename-file)
+      ("C-c n R" . denote-rename-file-using-front-matter)
+      ("C-c n ." . cq-insert-time-stamp)
+      )
+    :custom
+    (denote-directory "~/Documents/notes")
+    (denote-infer-keywords t)
+    (denote-sort-keywords t)
+    (denote-file-type 'text)
+    (denote-prompts '(title keywords))
+    (denote-journal-extras-title-format 'day-date-month-year)
+    :config
+    (setq crm-separator ",")
+    (require 'denote-journal)
+    (defun cq-open-denote-directory ()
+      (interactive)
+      (revert-buffer (dired denote-directory)))
+    (defun cq-insert-time-stamp ()
+      "Insert a timestamp with a newline character."
+      (interactive)
+      (insert (current-time-string))
+      (newline)))
 
-(use-package denote-menu
-  :after denote)
+  (use-package denote-menu
+    :after denote)
+
+  (use-package denote-markdown
+    :after denote)
+
 #+END_SRC
 
 * Writing
@@ -166,4 +167,20 @@ Configure markdown-mode for editing markdown files.
          ("\\.md\\'" . markdown-mode)
          ("\\.markdown\\'" . markdown-mode))
   :init (setq markdown-command "markdown"))
+#+END_SRC
+
+* RSS
+
+Configure elfeed for reading RSS/Atom feeds.
+
+#+BEGIN_SRC emacs-lisp
+(use-package elfeed
+  :bind ("C-c e" . elfeed)
+  :custom
+  (elfeed-feeds '("https://geohot.github.io/blog/feed.xml"
+                   "http://karpathy.github.io/feed.xml"
+                   "http://blog.stephenwolfram.com/feed/"
+                   "https://vitalik.eth.limo/feed.xml"
+                   "https://world.hey.com/dhh/feed.atom"
+                   "https://world.hey.com/jason/feed.atom")))
 #+END_SRC
