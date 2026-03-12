@@ -1,11 +1,34 @@
 (require 'package)
-(add-to-list 'package-archives '("melpa-stable" . "https://stable.melpa.org/packages/") t)
+(setq package-archives
+      '(("gnu" . "https://elpa.gnu.org/packages/")
+        ("nongnu" . "https://elpa.nongnu.org/nongnu/")
+        ("melpa-stable" . "https://stable.melpa.org/packages/")))
+(setq package-archive-priorities
+      '(("gnu" . 30)
+        ("nongnu" . 20)
+        ("melpa-stable" . 10)))
 (package-initialize)
 
-;; Bootstrap use-package
-(unless (package-installed-p 'use-package)
-  (package-refresh-contents)
-  (package-install 'use-package))
+(let ((archives-refreshed nil))
+  ;; Bootstrap use-package
+  (unless (package-installed-p 'use-package)
+    (package-refresh-contents)
+    (setq archives-refreshed t)
+    (package-install 'use-package))
+
+  (setq package-pinned-packages
+        '((consult . "gnu")
+          (marginalia . "gnu")
+          (orderless . "gnu")
+          (vertico . "gnu")))
+
+  ;; Refresh archive contents once when the completion stack is not installed yet.
+  (unless (or archives-refreshed
+              (and (package-installed-p 'consult)
+                   (package-installed-p 'marginalia)
+                   (package-installed-p 'orderless)
+                   (package-installed-p 'vertico)))
+    (package-refresh-contents)))
 
 (require 'use-package)
 (setq use-package-always-ensure t)
@@ -61,6 +84,40 @@
   :diminish
   :init
   (which-key-mode 1))
+
+(use-package vertico
+  :init
+  (vertico-mode 1))
+
+(use-package orderless
+  :custom
+  (completion-styles '(orderless basic))
+  (completion-category-defaults nil)
+  (completion-category-overrides '((file (styles partial-completion)))))
+
+(use-package marginalia
+  :init
+  (marginalia-mode 1))
+
+(use-package consult
+  :bind (([remap switch-to-buffer] . consult-buffer)
+         ([remap bookmark-jump] . consult-bookmark)
+         ([remap goto-line] . consult-goto-line)
+         ([remap imenu] . consult-imenu)
+         ([remap yank-pop] . consult-yank-pop)
+         ("C-s" . consult-line)
+         ("C-x C-r" . consult-recent-file)))
+
+(use-package info
+  :ensure nil
+  :init
+  (defun cq-add-package-info-manuals ()
+    "Add installed package manuals from `package-user-dir' to `Info-additional-directory-list'."
+    (when (file-directory-p package-user-dir)
+      (dolist (dir (directory-files package-user-dir t directory-files-no-dot-files-regexp))
+        (when (file-exists-p (expand-file-name "dir" dir))
+          (add-to-list 'Info-additional-directory-list dir)))))
+  (cq-add-package-info-manuals))
 
 (use-package dired
   :ensure nil
@@ -275,7 +332,9 @@ Hacker News entries open the linked story in EWW; other entries use Elfeed's sho
                    "http://karpathy.github.io/feed.xml"
                    "http://blog.stephenwolfram.com/feed/"
                    "https://world.hey.com/dhh/feed.atom"
-                   "https://world.hey.com/jason/feed.atom"))
+                   "https://world.hey.com/jason/feed.atom"
+                   "https://planet.emacslife.com/atom.xml"
+                   "https://protesilaos.com/master.xml"))
   :config
   (add-to-list 'global-mode-string cq-elfeed-mode-line t)
   (remove-hook 'elfeed-update-hooks #'cq-elfeed-refresh-mode-line-after-update)
