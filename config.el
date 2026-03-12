@@ -27,29 +27,40 @@
   (load-theme 'modus-operandi t))
 
 (when (string= system-name "muon.local")
-  (set-face-attribute 'default nil :font "IBM Plex Mono" :height 160))
+  (set-face-attribute 'default nil :font "IBM Plex Mono" :height 160)
+  (set-face-attribute 'variable-pitch nil :font "Charter" :height 180))
 
 (use-package emacs
   :init
   ;; Indentation
   (setq-default indent-tabs-mode nil)
   (setq-default tab-width 2)
-  
+
   ;; File management
   (setq backup-directory-alist '(("." . "~/.config/emacs/backups")))
   (setq auto-save-file-name-transforms '((".*" "~/.config/emacs/auto-save-list/" t)))
-  
+
   ;; Visual aids
   (global-display-line-numbers-mode 1)
   (show-paren-mode 1)
   (global-auto-revert-mode 1)
-  
+
+  ;; History and recent files
+  (savehist-mode 1)
+  (recentf-mode 1)
+  (setq recentf-max-saved-items 50)
+
   ;; macOS compatibility
   (setq dired-use-ls-dired nil)
-  
+
   ;; Better keybindings
   :bind
   ("C-x C-b" . ibuffer))
+
+(use-package which-key
+  :diminish
+  :init
+  (which-key-mode 1))
 
 (use-package dired
   :ensure nil
