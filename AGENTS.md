@@ -12,8 +12,10 @@ Use Emacs itself as the build and validation tool:
 
 Run the batch startup check before opening a PR. If you change Denote, Dired, Markdown, or Olivetti behavior, also test that workflow interactively.
 
+**Batch mode limitations:** `--batch` runs without a display, so packages that depend on GUI features (AppleScript, D-Bus, frame parameters, system appearance) will not exercise those code paths. For such packages (e.g., `auto-dark`), prefer `:config` over `:init` in `use-package` blocks to defer activation until the package is fully loaded, and flag the change for interactive testing.
+
 ## Coding Style & Naming Conventions
-Emacs Lisp here uses two-space indentation and spaces instead of tabs; the config explicitly sets `indent-tabs-mode` to `nil` and `tab-width` to `2`. Prefer `use-package` blocks and keep related settings grouped under `:init`, `:custom`, `:bind`, and `:config`. Local helper functions currently use the `cq-` prefix, and Lisp symbols should stay lower-case with hyphens. Keep comments brief and practical.
+Emacs Lisp here uses two-space indentation and spaces instead of tabs; the config explicitly sets `indent-tabs-mode` to `nil` and `tab-width` to `2`. Prefer `use-package` blocks and keep related settings grouped under `:init`, `:custom`, `:bind`, and `:config`. Use `:config` (not `:init`) for mode activation calls that trigger side effects like system calls or GUI operations. Local helper functions currently use the `cq-` prefix, and Lisp symbols should stay lower-case with hyphens. Keep comments brief and practical.
 
 ## Testing Guidelines
 There is no dedicated automated test suite. Treat `emacs --batch --init-directory=. --eval '(message "startup ok")'` as the required smoke test. After feature changes, manually verify the affected mode or package, for example note creation in Denote or Markdown file association. Keep `config.org` and `config.el` synchronized in the same change.
