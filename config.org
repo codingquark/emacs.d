@@ -1,6 +1,7 @@
 #+TITLE: Emacs Configuration
 #+AUTHOR: codingquark
 #+STARTUP: overview
+#+PROPERTY: header-args:emacs-lisp :tangle config.el
 
 * Package Management
 
@@ -150,11 +151,7 @@ Configure Denote for simple note-taking and knowledge management.
 Configure olivetti for distraction-free writing with centered text.
 
 #+BEGIN_SRC emacs-lisp
-(use-package olivetti
-  :hook ((text-mode . olivetti-mode)
-         (org-mode . olivetti-mode))
-  :config
-  (setq olivetti-body-width 80))
+(use-package olivetti)
 #+END_SRC
 
 ** Markdown
@@ -175,12 +172,178 @@ Configure elfeed for reading RSS/Atom feeds.
 
 #+BEGIN_SRC emacs-lisp
 (use-package elfeed
-  :bind ("C-c e" . elfeed)
+  :demand t
+  :bind (("C-c e" . cq-elfeed)
+         ("C-c h" . cq-elfeed-hacker-news))
+  :preface
+  (defvar cq-elfeed-mode-line-string "")
+  (defvar cq-elfeed-update-timer nil)
+  (defvar cq-elfeed-unread-count-cache 0)
+  (defconst cq-elfeed-default-filter-suffix "-hackernews")
+  (defconst cq-elfeed-hacker-news-filter "@2-weeks-ago +hackernews")
+  (defconst cq-elfeed-mode-line
+    '(:eval
+      (if (stringp cq-elfeed-mode-line-string)
+          cq-elfeed-mode-line-string
+        "")))
+
+  (defun cq-elfeed-entry-recent-p (entry)
+    "Return non-nil when ENTRY is within Elfeed's 6-month window."
+    (require 'elfeed-lib)
+    (> (elfeed-entry-date entry)
+       (- (float-time) (elfeed-time-duration "6 months ago"))))
+
+  (defun cq-elfeed-unread-count ()
+    "Count unread elfeed entries from the last 6 months."
+    (require 'elfeed-db)
+    (elfeed-db-ensure)
+    (let ((count 0))
+      (with-elfeed-db-visit (entry _feed)
+        (when (and (elfeed-tagged-p 'unread entry)
+                   (cq-elfeed-entry-recent-p entry))
+          (cl-incf count)))
+      count))
+
+  (defun cq-elfeed-refresh-mode-line-string ()
+    "Render the mode line from the cached unread count."
+    (setq cq-elfeed-mode-line-string
+          (if (> cq-elfeed-unread-count-cache 0)
+              (format " [%d %s]"
+                      cq-elfeed-unread-count-cache
+                      (if (= cq-elfeed-unread-count-cache 1) "entry" "entries"))
+            ""))
+    (force-mode-line-update t))
+
+  (defun cq-elfeed-refresh-mode-line (&rest _)
+    "Recount unread entries and update the mode line."
+    (setq cq-elfeed-unread-count-cache (cq-elfeed-unread-count))
+    (cq-elfeed-refresh-mode-line-string))
+
+  (defun cq-elfeed-count-recent-entries (entries)
+    "Count recent ENTRIES within Elfeed's 6-month window."
+    (let ((count 0))
+      (dolist (entry entries count)
+        (when (cq-elfeed-entry-recent-p entry)
+          (cl-incf count)))))
+
+  (defun cq-elfeed-handle-tagged-entries (entries tags)
+    "Increment the cached count when ENTRIES gain TAGS."
+    (when (memq 'unread tags)
+      (cl-incf cq-elfeed-unread-count-cache
+               (cq-elfeed-count-recent-entries entries))
+      (cq-elfeed-refresh-mode-line-string)))
+
+  (defun cq-elfeed-handle-untagged-entries (entries tags)
+    "Decrement the cached count when ENTRIES lose TAGS."
+    (when (memq 'unread tags)
+      (setq cq-elfeed-unread-count-cache
+            (max 0
+                 (- cq-elfeed-unread-count-cache
+                    (cq-elfeed-count-recent-entries entries))))
+      (cq-elfeed-refresh-mode-line-string)))
+
+  (defun cq-elfeed-refresh-mode-line-after-update (&rest _)
+    "Refresh the cached count once the current Elfeed update completes."
+    (when (zerop (elfeed-queue-count-total))
+      (cq-elfeed-refresh-mode-line)))
+
+  (defun cq-elfeed-schedule-daily-refresh ()
+    "Schedule a daily Elfeed refresh for 9:00 AM."
+    (when (timerp cq-elfeed-update-timer)
+      (cancel-timer cq-elfeed-update-timer))
+    (setq cq-elfeed-update-timer
+          (run-at-time "09:00" 86400 #'elfeed-update)))
+
+  (defun cq-elfeed-open-filter (filter)
+    "Open Elfeed and apply FILTER."
+    (elfeed)
+    (elfeed-search-set-filter filter))
+
+  (defun cq-elfeed-hacker-news-entry-p (entry)
+    "Return non-nil when ENTRY is a Hacker News item."
+    (elfeed-tagged-p 'hackernews entry))
+
+  (defun cq-elfeed-entry-comments-url (entry)
+    "Return the Hacker News comments URL for ENTRY, if available."
+    (let ((content (elfeed-deref (elfeed-entry-content entry))))
+      (when (and (stringp content)
+                 (string-match "href=\"\\([^\"]+\\)\"" content))
+        (match-string 1 content))))
+
+  (defun cq-elfeed-open-entry-in-eww (entry &optional comments-p)
+    "Open ENTRY in EWW.
+When COMMENTS-P is non-nil, open the Hacker News comments page instead."
+    (require 'eww)
+    (let ((url (if comments-p
+                   (or (cq-elfeed-entry-comments-url entry)
+                       (elfeed-entry-link entry))
+                 (elfeed-entry-link entry))))
+      (unless url
+        (user-error "Entry has no URL to open"))
+      (eww url)))
+
+  (defun cq-elfeed-search-visit-hacker-news (entry &optional comments-p)
+    "Open Hacker News ENTRY in EWW and update the search buffer state.
+When COMMENTS-P is non-nil, open the comments page instead."
+    (elfeed-untag entry 'unread)
+    (elfeed-search-update-entry entry)
+    (unless elfeed-search-remain-on-entry
+      (forward-line))
+    (cq-elfeed-open-entry-in-eww entry comments-p))
+
+  (defun cq-elfeed-search-open (entry)
+    "Open ENTRY from Elfeed search.
+Hacker News entries open the linked story in EWW; other entries use Elfeed's show buffer."
+    (interactive (list (elfeed-search-selected :ignore-region)))
+    (unless (elfeed-entry-p entry)
+      (user-error "No entry selected"))
+    (if (cq-elfeed-hacker-news-entry-p entry)
+        (cq-elfeed-search-visit-hacker-news entry)
+      (elfeed-search-show-entry entry)))
+
+  (defun cq-elfeed-search-open-comments (entry)
+    "Open Hacker News comments for ENTRY in EWW."
+    (interactive (list (elfeed-search-selected :ignore-region)))
+    (unless (elfeed-entry-p entry)
+      (user-error "No entry selected"))
+    (unless (cq-elfeed-hacker-news-entry-p entry)
+      (user-error "Current entry is not from Hacker News"))
+    (cq-elfeed-search-visit-hacker-news entry t))
+
+  (defun cq-elfeed-default-filter ()
+    "Return the default Elfeed filter with Hacker News entries excluded."
+    (concat (default-value 'elfeed-search-filter)
+            " "
+            cq-elfeed-default-filter-suffix))
+
+  (defun cq-elfeed ()
+    "Open Elfeed with Hacker News entries excluded."
+    (interactive)
+    (cq-elfeed-open-filter (cq-elfeed-default-filter)))
+
+  (defun cq-elfeed-hacker-news ()
+    "Open Elfeed focused on Hacker News front-page stories."
+    (interactive)
+    (cq-elfeed-open-filter cq-elfeed-hacker-news-filter))
   :custom
-  (elfeed-feeds '("https://geohot.github.io/blog/feed.xml"
+  (elfeed-feeds '(("https://news.ycombinator.com/rss" hackernews)
+                   "https://geohot.github.io/blog/feed.xml"
                    "http://karpathy.github.io/feed.xml"
                    "http://blog.stephenwolfram.com/feed/"
-                   "https://vitalik.eth.limo/feed.xml"
                    "https://world.hey.com/dhh/feed.atom"
-                   "https://world.hey.com/jason/feed.atom")))
+                   "https://world.hey.com/jason/feed.atom"))
+  :config
+  (add-to-list 'global-mode-string cq-elfeed-mode-line t)
+  (remove-hook 'elfeed-update-hooks #'cq-elfeed-refresh-mode-line-after-update)
+  (remove-hook 'elfeed-tag-hooks #'cq-elfeed-handle-tagged-entries)
+  (remove-hook 'elfeed-untag-hooks #'cq-elfeed-handle-untagged-entries)
+  (add-hook 'elfeed-update-hooks #'cq-elfeed-refresh-mode-line-after-update)
+  (add-hook 'elfeed-tag-hooks #'cq-elfeed-handle-tagged-entries)
+  (add-hook 'elfeed-untag-hooks #'cq-elfeed-handle-untagged-entries)
+  (define-key elfeed-search-mode-map (kbd "RET") #'cq-elfeed-search-open)
+  (define-key elfeed-search-mode-map (kbd "C-c C-c") #'cq-elfeed-search-open-comments)
+  (advice-remove 'elfeed-search-quit-window #'cq-elfeed-refresh-mode-line)
+  (cq-elfeed-refresh-mode-line)
+  (cq-elfeed-schedule-daily-refresh)
+  (elfeed-update))
 #+END_SRC
