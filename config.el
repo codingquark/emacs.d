@@ -62,7 +62,6 @@
 (use-package denote
   :hook (find-file . denote-fontify-links-mode)
   :bind (
-    ("C-c n j" . denote-journal-new-or-existing-entry)
     ("C-c n n" . denote)
     ("C-c n D" . cq-open-denote-directory)
     ("C-c n N" . denote-type)
@@ -80,10 +79,8 @@
   (denote-sort-keywords t)
   (denote-file-type 'text)
   (denote-prompts '(title keywords))
-  (denote-journal-extras-title-format 'day-date-month-year)
   :config
   (setq crm-separator ",")
-  (require 'denote-journal)
   (defun cq-open-denote-directory ()
     (interactive)
     (revert-buffer (dired denote-directory)))
@@ -92,6 +89,13 @@
     (interactive)
     (insert (current-time-string))
     (newline)))
+
+(use-package denote-journal
+  :after denote
+  :bind
+  (("C-c n j" . denote-journal-new-or-existing-entry))
+  :custom
+  (denote-journal-title-format 'day-date-month-year))
 
 (use-package denote-menu
   :after denote)
