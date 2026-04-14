@@ -26,6 +26,8 @@ flycheck_*.el
 
 # Recent files
 /recentf
+/history
+/places
 
 # Undo-tree
 *.~undo-tree~
@@ -51,6 +53,7 @@ dist/
 
 # Url cache
 /url/
+/elfeed/
 
 # Smex
 /smex-items

@@ -1,12 +1,12 @@
 (require 'package)
-(setq package-archives
-      '(("gnu" . "https://elpa.gnu.org/packages/")
-        ("nongnu" . "https://elpa.nongnu.org/nongnu/")
-        ("melpa-stable" . "https://stable.melpa.org/packages/")))
+(add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
+(add-to-list 'package-archives '("melpa-stable" . "https://stable.melpa.org/packages/") t)
 (setq package-archive-priorities
       '(("gnu" . 30)
         ("nongnu" . 20)
-        ("melpa-stable" . 10)))
+        ("melpa-stable" . 10)
+        ("melpa" . 0)))
+(setq package-install-upgrade-built-in t)
 (package-initialize)
 
 (let ((archives-refreshed nil))
@@ -43,15 +43,25 @@
   ;; Startup configuration
   (setq inhibit-startup-message t)
   (setq initial-major-mode 'org-mode)
-  (setq initial-scratch-message ""))
+  (setq initial-scratch-message "")
+  
+  ;; Start in denote directory
+  ;; (setq initial-buffer-choice (lambda () (dired "~/Documents/notes")))
+  )
 
 (use-package modus-themes
   :init
   (load-theme 'modus-operandi t))
 
-(when (string= system-name "muon.local")
-  (set-face-attribute 'default nil :font "IBM Plex Mono" :height 160)
-  (set-face-attribute 'variable-pitch nil :font "Charter" :height 180))
+(defconst cq-variable-pitch-font "Charter"
+  "Font family used by variable-pitch faces.")
+
+(when (find-font (font-spec :family cq-variable-pitch-font))
+  ;; Reading-oriented modes like elfeed-show rely on `variable-pitch`.
+  (set-face-attribute 'variable-pitch nil :family cq-variable-pitch-font))
+
+(when (or (string= system-name "muon.local") (string= system-name "photon"))
+  (set-face-attribute 'default nil :font "IBM Plex Mono" :height 160))
 
 (use-package emacs
   :init
@@ -66,28 +76,25 @@
   ;; Visual aids
   (global-display-line-numbers-mode 1)
   (show-paren-mode 1)
-  (global-auto-revert-mode 1)
-
-  ;; History and recent files
-  (savehist-mode 1)
-  (recentf-mode 1)
-  (setq recentf-max-saved-items 50)
-
   ;; macOS compatibility
   (setq dired-use-ls-dired nil)
+
+  :hook ((dired-mode . auto-revert-mode)
+         (prog-mode . auto-revert-mode)
+         (text-mode . auto-revert-mode))
 
   ;; Better keybindings
   :bind
   ("C-x C-b" . ibuffer))
 
-(use-package which-key
-  :diminish
-  :init
-  (which-key-mode 1))
-
 (use-package vertico
   :init
-  (vertico-mode 1))
+  (vertico-mode 1)
+  :bind (:map vertico-map
+              ("RET" . vertico-directory-enter)
+              ("DEL" . vertico-directory-delete-char)
+              ("M-DEL" . vertico-directory-delete-word))
+  :hook (rfn-eshadow-update-overlay . vertico-directory-tidy))
 
 (use-package orderless
   :custom
@@ -100,34 +107,124 @@
   (marginalia-mode 1))
 
 (use-package consult
-  :bind (([remap switch-to-buffer] . consult-buffer)
-         ([remap bookmark-jump] . consult-bookmark)
-         ([remap goto-line] . consult-goto-line)
-         ([remap imenu] . consult-imenu)
-         ([remap yank-pop] . consult-yank-pop)
-         ("C-s" . consult-line)
-         ("C-x C-r" . consult-recent-file)))
+  :bind (("C-s" . consult-line)
+         ("C-x b" . consult-buffer)
+         ("C-x 4 b" . consult-buffer-other-window)
+         ("M-y" . consult-yank-pop)
+         ("M-g g" . consult-goto-line)
+         ("M-g i" . consult-imenu)
+         ("M-s g" . consult-grep)
+         ("M-s r" . consult-ripgrep)))
 
-(use-package info
+(use-package embark
+  :bind (("C-." . embark-act)
+         ("C-;" . embark-dwim)
+         ("C-h B" . embark-bindings))
+  :init
+  (setq prefix-help-command #'embark-prefix-help-command))
+
+(use-package embark-consult
+  :after (embark consult)
+  :hook (embark-collect-mode . consult-preview-at-point-mode))
+
+(use-package which-key
+  :init
+  (which-key-mode 1)
+  :custom
+  (which-key-idle-delay 0.5))
+
+(use-package helpful
+  :bind (([remap describe-command] . helpful-command)
+         ([remap describe-function] . helpful-callable)
+         ([remap describe-key] . helpful-key)
+         ([remap describe-symbol] . helpful-symbol)
+         ([remap describe-variable] . helpful-variable)))
+
+(use-package savehist
   :ensure nil
   :init
-  (defun cq-add-package-info-manuals ()
-    "Add installed package manuals from `package-user-dir' to `Info-additional-directory-list'."
-    (when (file-directory-p package-user-dir)
-      (dolist (dir (directory-files package-user-dir t directory-files-no-dot-files-regexp))
-        (when (file-exists-p (expand-file-name "dir" dir))
-          (add-to-list 'Info-additional-directory-list dir)))))
-  (cq-add-package-info-manuals))
+  (savehist-mode 1))
+
+(use-package recentf
+  :ensure nil
+  :init
+  (recentf-mode 1)
+  :custom
+  (recentf-max-saved-items 200))
+
+(use-package saveplace
+  :ensure nil
+  :init
+  (save-place-mode 1))
+
+(use-package winner
+  :ensure nil
+  :init
+  (winner-mode 1))
+
+(defvar cq-elfeed-feeds-file
+  (expand-file-name "elfeed-feeds.el" user-emacs-directory)
+  "Path to the personal Elfeed feed list.")
+
+(use-package elfeed
+  :bind (("C-c f" . elfeed)
+         ("C-c F" . cq-open-elfeed-feeds-file))
+  :custom
+  (elfeed-db-directory (expand-file-name "elfeed" user-emacs-directory))
+  (elfeed-search-filter "@2-months-ago +unread")
+  :config
+  ;; Keep subscriptions outside the main config to make feed edits low-friction.
+  (load cq-elfeed-feeds-file 'noerror 'nomessage)
+
+  (defun cq-open-elfeed-feeds-file ()
+    "Open the Elfeed subscriptions file."
+    (interactive)
+    (find-file cq-elfeed-feeds-file)))
 
 (use-package dired
   :ensure nil
   :hook ((dired-mode . denote-dired-mode)
          (dired-mode . dired-hide-details-mode)))
 
+(use-package magit
+  :bind (("C-x g" . magit-status)))
+
+(use-package gptel
+  :commands (gptel gptel-send gptel-menu)
+  :config
+  (setq gptel-backend
+        (gptel-make-openai "OpenRouter"
+          :host "openrouter.ai"
+          :endpoint "/api/v1/chat/completions"
+          :stream t
+          :key gptel-api-key
+          :models '(openai/gpt-4.1-mini
+                    nvidia/nemotron-3-super-120b-a12b:free))))
+
+(use-package gptel-magit
+  :after (gptel magit)
+  :hook (magit-mode . gptel-magit-install)
+  :config
+  ;; Custom `:callback's to `gptel-request' receive reasoning chunks as
+  ;; `(reasoning . TEXT)' cons cells, which `gptel-magit' tries to insert as
+  ;; a string and dies. Force non-streaming so we get one final string, and
+  ;; drop any non-string events defensively.
+  (defun cq-gptel-magit--forward-if-string (cb response info)
+    (when (stringp response)
+      (funcall cb response info)))
+
+  (defun cq-gptel-magit--request-advice (orig-fn prompt &rest args)
+    (let* ((cb (plist-get args :callback))
+           (wrapped (apply-partially #'cq-gptel-magit--forward-if-string cb))
+           (args (plist-put args :stream nil))
+           (args (plist-put args :callback wrapped)))
+      (apply orig-fn prompt args)))
+
+  (advice-add 'gptel-magit--request :around #'cq-gptel-magit--request-advice))
+
 (use-package denote
-  :hook (find-file . denote-fontify-links-mode)
+  :hook (text-mode . denote-fontify-links-mode-maybe)
   :bind (
-    ("C-c n j" . denote-journal-new-or-existing-entry)
     ("C-c n n" . denote)
     ("C-c n D" . cq-open-denote-directory)
     ("C-c n N" . denote-type)
@@ -145,10 +242,8 @@
   (denote-sort-keywords t)
   (denote-file-type 'text)
   (denote-prompts '(title keywords))
-  (denote-journal-extras-title-format 'day-date-month-year)
   :config
   (setq crm-separator ",")
-  (require 'denote-journal)
   (defun cq-open-denote-directory ()
     (interactive)
     (revert-buffer (dired denote-directory)))
@@ -158,194 +253,21 @@
     (insert (current-time-string))
     (newline)))
 
+(use-package denote-journal
+  :after denote
+  :bind
+  (("C-c n j" . denote-journal-new-or-existing-entry))
+  :custom
+  (denote-journal-title-format 'day-date-month-year))
+
 (use-package denote-menu
   :after denote)
 
-(use-package denote-markdown
-  :after denote)
-
-(use-package olivetti)
+(use-package olivetti
+  :config
+  (setq olivetti-body-width 80))
 
 (use-package markdown-mode
   :mode (("README\\.md\\'" . gfm-mode)
          ("\\.md\\'" . markdown-mode)
-         ("\\.markdown\\'" . markdown-mode))
-  :init (setq markdown-command "markdown"))
-
-(use-package elfeed
-  :demand t
-  :bind (("C-c e" . cq-elfeed)
-         ("C-c h" . cq-elfeed-hacker-news))
-  :preface
-  (defvar cq-elfeed-mode-line-string "")
-  (defvar cq-elfeed-update-timer nil)
-  (defvar cq-elfeed-unread-count-cache 0)
-  (defconst cq-elfeed-default-filter-suffix "-hackernews")
-  (defconst cq-elfeed-hacker-news-filter "@2-weeks-ago +hackernews")
-  (defconst cq-elfeed-mode-line
-    '(:eval
-      (if (stringp cq-elfeed-mode-line-string)
-          cq-elfeed-mode-line-string
-        "")))
-
-  (defun cq-elfeed-entry-recent-p (entry)
-    "Return non-nil when ENTRY is within Elfeed's 6-month window."
-    (require 'elfeed-lib)
-    (> (elfeed-entry-date entry)
-       (- (float-time) (elfeed-time-duration "6 months ago"))))
-
-  (defun cq-elfeed-unread-count ()
-    "Count unread elfeed entries from the last 6 months."
-    (require 'elfeed-db)
-    (elfeed-db-ensure)
-    (let ((count 0))
-      (with-elfeed-db-visit (entry _feed)
-        (when (and (elfeed-tagged-p 'unread entry)
-                   (cq-elfeed-entry-recent-p entry))
-          (cl-incf count)))
-      count))
-
-  (defun cq-elfeed-refresh-mode-line-string ()
-    "Render the mode line from the cached unread count."
-    (setq cq-elfeed-mode-line-string
-          (if (> cq-elfeed-unread-count-cache 0)
-              (format " [%d %s]"
-                      cq-elfeed-unread-count-cache
-                      (if (= cq-elfeed-unread-count-cache 1) "entry" "entries"))
-            ""))
-    (force-mode-line-update t))
-
-  (defun cq-elfeed-refresh-mode-line (&rest _)
-    "Recount unread entries and update the mode line."
-    (setq cq-elfeed-unread-count-cache (cq-elfeed-unread-count))
-    (cq-elfeed-refresh-mode-line-string))
-
-  (defun cq-elfeed-count-recent-entries (entries)
-    "Count recent ENTRIES within Elfeed's 6-month window."
-    (let ((count 0))
-      (dolist (entry entries count)
-        (when (cq-elfeed-entry-recent-p entry)
-          (cl-incf count)))))
-
-  (defun cq-elfeed-handle-tagged-entries (entries tags)
-    "Increment the cached count when ENTRIES gain TAGS."
-    (when (memq 'unread tags)
-      (cl-incf cq-elfeed-unread-count-cache
-               (cq-elfeed-count-recent-entries entries))
-      (cq-elfeed-refresh-mode-line-string)))
-
-  (defun cq-elfeed-handle-untagged-entries (entries tags)
-    "Decrement the cached count when ENTRIES lose TAGS."
-    (when (memq 'unread tags)
-      (setq cq-elfeed-unread-count-cache
-            (max 0
-                 (- cq-elfeed-unread-count-cache
-                    (cq-elfeed-count-recent-entries entries))))
-      (cq-elfeed-refresh-mode-line-string)))
-
-  (defun cq-elfeed-refresh-mode-line-after-update (&rest _)
-    "Refresh the cached count once the current Elfeed update completes."
-    (when (zerop (elfeed-queue-count-total))
-      (cq-elfeed-refresh-mode-line)))
-
-  (defun cq-elfeed-schedule-daily-refresh ()
-    "Schedule a daily Elfeed refresh for 9:00 AM."
-    (when (timerp cq-elfeed-update-timer)
-      (cancel-timer cq-elfeed-update-timer))
-    (setq cq-elfeed-update-timer
-          (run-at-time "09:00" 86400 #'elfeed-update)))
-
-  (defun cq-elfeed-open-filter (filter)
-    "Open Elfeed and apply FILTER."
-    (elfeed)
-    (elfeed-search-set-filter filter))
-
-  (defun cq-elfeed-hacker-news-entry-p (entry)
-    "Return non-nil when ENTRY is a Hacker News item."
-    (elfeed-tagged-p 'hackernews entry))
-
-  (defun cq-elfeed-entry-comments-url (entry)
-    "Return the Hacker News comments URL for ENTRY, if available."
-    (let ((content (elfeed-deref (elfeed-entry-content entry))))
-      (when (and (stringp content)
-                 (string-match "href=\"\\([^\"]+\\)\"" content))
-        (match-string 1 content))))
-
-  (defun cq-elfeed-open-entry-in-eww (entry &optional comments-p)
-    "Open ENTRY in EWW.
-When COMMENTS-P is non-nil, open the Hacker News comments page instead."
-    (require 'eww)
-    (let ((url (if comments-p
-                   (or (cq-elfeed-entry-comments-url entry)
-                       (elfeed-entry-link entry))
-                 (elfeed-entry-link entry))))
-      (unless url
-        (user-error "Entry has no URL to open"))
-      (eww url)))
-
-  (defun cq-elfeed-search-visit-hacker-news (entry &optional comments-p)
-    "Open Hacker News ENTRY in EWW and update the search buffer state.
-When COMMENTS-P is non-nil, open the comments page instead."
-    (elfeed-untag entry 'unread)
-    (elfeed-search-update-entry entry)
-    (unless elfeed-search-remain-on-entry
-      (forward-line))
-    (cq-elfeed-open-entry-in-eww entry comments-p))
-
-  (defun cq-elfeed-search-open (entry)
-    "Open ENTRY from Elfeed search.
-Hacker News entries open the linked story in EWW; other entries use Elfeed's show buffer."
-    (interactive (list (elfeed-search-selected :ignore-region)))
-    (unless (elfeed-entry-p entry)
-      (user-error "No entry selected"))
-    (if (cq-elfeed-hacker-news-entry-p entry)
-        (cq-elfeed-search-visit-hacker-news entry)
-      (elfeed-search-show-entry entry)))
-
-  (defun cq-elfeed-search-open-comments (entry)
-    "Open Hacker News comments for ENTRY in EWW."
-    (interactive (list (elfeed-search-selected :ignore-region)))
-    (unless (elfeed-entry-p entry)
-      (user-error "No entry selected"))
-    (unless (cq-elfeed-hacker-news-entry-p entry)
-      (user-error "Current entry is not from Hacker News"))
-    (cq-elfeed-search-visit-hacker-news entry t))
-
-  (defun cq-elfeed-default-filter ()
-    "Return the default Elfeed filter with Hacker News entries excluded."
-    (concat (default-value 'elfeed-search-filter)
-            " "
-            cq-elfeed-default-filter-suffix))
-
-  (defun cq-elfeed ()
-    "Open Elfeed with Hacker News entries excluded."
-    (interactive)
-    (cq-elfeed-open-filter (cq-elfeed-default-filter)))
-
-  (defun cq-elfeed-hacker-news ()
-    "Open Elfeed focused on Hacker News front-page stories."
-    (interactive)
-    (cq-elfeed-open-filter cq-elfeed-hacker-news-filter))
-  :custom
-  (elfeed-feeds '(("https://news.ycombinator.com/rss" hackernews)
-                   "https://geohot.github.io/blog/feed.xml"
-                   "http://karpathy.github.io/feed.xml"
-                   "http://blog.stephenwolfram.com/feed/"
-                   "https://world.hey.com/dhh/feed.atom"
-                   "https://world.hey.com/jason/feed.atom"
-                   "https://planet.emacslife.com/atom.xml"
-                   "https://protesilaos.com/master.xml"))
-  :config
-  (add-to-list 'global-mode-string cq-elfeed-mode-line t)
-  (remove-hook 'elfeed-update-hooks #'cq-elfeed-refresh-mode-line-after-update)
-  (remove-hook 'elfeed-tag-hooks #'cq-elfeed-handle-tagged-entries)
-  (remove-hook 'elfeed-untag-hooks #'cq-elfeed-handle-untagged-entries)
-  (add-hook 'elfeed-update-hooks #'cq-elfeed-refresh-mode-line-after-update)
-  (add-hook 'elfeed-tag-hooks #'cq-elfeed-handle-tagged-entries)
-  (add-hook 'elfeed-untag-hooks #'cq-elfeed-handle-untagged-entries)
-  (define-key elfeed-search-mode-map (kbd "RET") #'cq-elfeed-search-open)
-  (define-key elfeed-search-mode-map (kbd "C-c C-c") #'cq-elfeed-search-open-comments)
-  (advice-remove 'elfeed-search-quit-window #'cq-elfeed-refresh-mode-line)
-  (cq-elfeed-refresh-mode-line)
-  (cq-elfeed-schedule-daily-refresh)
-  (elfeed-update))
+         ("\\.markdown\\'" . markdown-mode)))
