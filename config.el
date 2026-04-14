@@ -30,6 +30,13 @@
   :init
   (load-theme 'modus-operandi t))
 
+(defconst cq-variable-pitch-font "Charter"
+  "Font family used by variable-pitch faces.")
+
+(when (find-font (font-spec :family cq-variable-pitch-font))
+  ;; Reading-oriented modes like elfeed-show rely on `variable-pitch`.
+  (set-face-attribute 'variable-pitch nil :family cq-variable-pitch-font))
+
 (when (or (string= system-name "muon.local") (string= system-name "photon"))
   (set-face-attribute 'default nil :font "IBM Plex Mono" :height 160))
 

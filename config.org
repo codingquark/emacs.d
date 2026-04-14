@@ -54,9 +54,17 @@ Load the Modus Vivendi theme for a clean dark interface.
 
 * Font Configuration
 
-Configure IBM Plex Mono font for this machine.
+Configure the core font faces: keep code and tabular buffers on IBM Plex Mono,
+and use Charter for variable-pitch reading buffers such as `shr` renderers.
 
 #+BEGIN_SRC emacs-lisp
+(defconst cq-variable-pitch-font "Charter"
+  "Font family used by variable-pitch faces.")
+
+(when (find-font (font-spec :family cq-variable-pitch-font))
+  ;; Reading-oriented modes like elfeed-show rely on `variable-pitch`.
+  (set-face-attribute 'variable-pitch nil :family cq-variable-pitch-font))
+
 (when (or (string= system-name "muon.local") (string= system-name "photon"))
   (set-face-attribute 'default nil :font "IBM Plex Mono" :height 160))
 #+END_SRC
@@ -198,7 +206,7 @@ Set up Elfeed for RSS reading and keep the feed list in a separate file.
          ("C-c F" . cq-open-elfeed-feeds-file))
   :custom
   (elfeed-db-directory (expand-file-name "elfeed" user-emacs-directory))
-  (elfeed-search-filter "@6-months-ago +unread")
+  (elfeed-search-filter "@2-months-ago +unread")
   :config
   ;; Keep subscriptions outside the main config to make feed edits low-friction.
   (load cq-elfeed-feeds-file 'noerror 'nomessage)
