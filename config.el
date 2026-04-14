@@ -1,5 +1,12 @@
 (require 'package)
+(add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
 (add-to-list 'package-archives '("melpa-stable" . "https://stable.melpa.org/packages/") t)
+(setq package-archive-priorities
+      '(("gnu" . 30)
+        ("nongnu" . 20)
+        ("melpa-stable" . 10)
+        ("melpa" . 0)))
+(setq package-install-upgrade-built-in t)
 (package-initialize)
 
 ;; Bootstrap use-package
