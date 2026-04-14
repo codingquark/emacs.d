@@ -24,7 +24,8 @@ plus regular MELPA for packages that are only published there.
 (setq use-package-always-ensure t)
 #+END_SRC
 
-* UI Configuration
+* Appearance
+** Toolbars and startup
 
 Clean up the interface by removing unnecessary UI elements and configuring the startup behavior.
 
@@ -35,18 +36,18 @@ Clean up the interface by removing unnecessary UI elements and configuring the s
     (menu-bar-mode -1)
     (tool-bar-mode -1)
     (scroll-bar-mode -1)
-    
+
     ;; Startup configuration
     (setq inhibit-startup-message t)
     (setq initial-major-mode 'org-mode)
     (setq initial-scratch-message "")
-    
+
     ;; Start in denote directory
     ;; (setq initial-buffer-choice (lambda () (dired "~/Documents/notes")))
     )
 #+END_SRC
 
-* Theme
+** Theme
 
 Load the Modus Vivendi theme for a clean dark interface.
 
@@ -56,7 +57,7 @@ Load the Modus Vivendi theme for a clean dark interface.
   (load-theme 'modus-operandi t))
 #+END_SRC
 
-* Line Highlighting
+** Line Highlighting
 
 [[https://protesilaos.com/emacs/lin][Lin]] is Prot's opinionated wrapper around ~hl-line-mode~. In modes that are
 primarily navigational — dired, ibuffer, magit lists, occur, elfeed-search,
@@ -73,7 +74,7 @@ the treatment automatically without per-hook wiring.
     (lin-global-mode 1))
 #+END_SRC
 
-* Font Configuration
+** Fonts
 
 Configure the core font faces: keep code and tabular buffers on IBM Plex Mono,
 and use Charter for variable-pitch reading buffers such as `shr` renderers.
@@ -90,7 +91,8 @@ and use Charter for variable-pitch reading buffers such as `shr` renderers.
   (set-face-attribute 'default nil :font "IBM Plex Mono" :height 160))
 #+END_SRC
 
-* Editor Settings
+* Editor
+** Defaults
 
 Configure basic editor behavior including indentation, backups, and visual aids.
 
@@ -120,8 +122,18 @@ Configure basic editor behavior including indentation, backups, and visual aids.
   ("C-x C-b" . ibuffer))
 #+END_SRC
 
-* Completion
+** Dired
 
+Configure dired with denote integration.
+
+#+BEGIN_SRC emacs-lisp
+(use-package dired
+  :ensure nil
+  :hook ((dired-mode . denote-dired-mode)
+         (dired-mode . dired-hide-details-mode)))
+#+END_SRC
+
+* Completion
 Set up a modern minibuffer completion stack for navigation, search, and actions.
 
 #+BEGIN_SRC emacs-lisp
@@ -211,42 +223,6 @@ Persist useful session state across restarts and make window layouts undoable.
   :ensure nil
   :init
   (winner-mode 1))
-#+END_SRC
-
-* Reading
-
-Set up Elfeed for RSS reading and keep the feed list in a separate file.
-
-#+BEGIN_SRC emacs-lisp
-(defvar cq-elfeed-feeds-file
-  (expand-file-name "elfeed-feeds.el" user-emacs-directory)
-  "Path to the personal Elfeed feed list.")
-
-(use-package elfeed
-  :bind (("C-c f" . elfeed)
-         ("C-c F" . cq-open-elfeed-feeds-file))
-  :custom
-  (elfeed-db-directory (expand-file-name "elfeed" user-emacs-directory))
-  (elfeed-search-filter "@2-months-ago +unread")
-  :config
-  ;; Keep subscriptions outside the main config to make feed edits low-friction.
-  (load cq-elfeed-feeds-file 'noerror 'nomessage)
-
-  (defun cq-open-elfeed-feeds-file ()
-    "Open the Elfeed subscriptions file."
-    (interactive)
-    (find-file cq-elfeed-feeds-file)))
-#+END_SRC
-
-* Dired Configuration
-
-Configure dired with denote integration.
-
-#+BEGIN_SRC emacs-lisp
-(use-package dired
-  :ensure nil
-  :hook ((dired-mode . denote-dired-mode)
-         (dired-mode . dired-hide-details-mode)))
 #+END_SRC
 
 * Git
@@ -496,6 +472,31 @@ Returns nil so ERC keeps processing the message normally."
 
   (with-eval-after-load 'erc
     (add-hook 'erc-server-PRIVMSG-functions #'cq-erc-notify-query))
+#+END_SRC
+
+* Reading
+
+Set up Elfeed for RSS reading and keep the feed list in a separate file.
+
+#+BEGIN_SRC emacs-lisp
+(defvar cq-elfeed-feeds-file
+  (expand-file-name "elfeed-feeds.el" user-emacs-directory)
+  "Path to the personal Elfeed feed list.")
+
+(use-package elfeed
+  :bind (("C-c f" . elfeed)
+         ("C-c F" . cq-open-elfeed-feeds-file))
+  :custom
+  (elfeed-db-directory (expand-file-name "elfeed" user-emacs-directory))
+  (elfeed-search-filter "@2-months-ago +unread")
+  :config
+  ;; Keep subscriptions outside the main config to make feed edits low-friction.
+  (load cq-elfeed-feeds-file 'noerror 'nomessage)
+
+  (defun cq-open-elfeed-feeds-file ()
+    "Open the Elfeed subscriptions file."
+    (interactive)
+    (find-file cq-elfeed-feeds-file)))
 #+END_SRC
 
 * Note Taking

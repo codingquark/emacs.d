@@ -72,6 +72,11 @@
   :bind
   ("C-x C-b" . ibuffer))
 
+(use-package dired
+  :ensure nil
+  :hook ((dired-mode . denote-dired-mode)
+         (dired-mode . dired-hide-details-mode)))
+
 (use-package vertico
   :init
   (vertico-mode 1)
@@ -146,30 +151,6 @@
   :ensure nil
   :init
   (winner-mode 1))
-
-(defvar cq-elfeed-feeds-file
-  (expand-file-name "elfeed-feeds.el" user-emacs-directory)
-  "Path to the personal Elfeed feed list.")
-
-(use-package elfeed
-  :bind (("C-c f" . elfeed)
-         ("C-c F" . cq-open-elfeed-feeds-file))
-  :custom
-  (elfeed-db-directory (expand-file-name "elfeed" user-emacs-directory))
-  (elfeed-search-filter "@2-months-ago +unread")
-  :config
-  ;; Keep subscriptions outside the main config to make feed edits low-friction.
-  (load cq-elfeed-feeds-file 'noerror 'nomessage)
-
-  (defun cq-open-elfeed-feeds-file ()
-    "Open the Elfeed subscriptions file."
-    (interactive)
-    (find-file cq-elfeed-feeds-file)))
-
-(use-package dired
-  :ensure nil
-  :hook ((dired-mode . denote-dired-mode)
-         (dired-mode . dired-hide-details-mode)))
 
 (use-package magit
   :bind (("C-x g" . magit-status)))
@@ -281,6 +262,25 @@ Returns nil so ERC keeps processing the message normally."
 
   (with-eval-after-load 'erc
     (add-hook 'erc-server-PRIVMSG-functions #'cq-erc-notify-query))
+
+(defvar cq-elfeed-feeds-file
+  (expand-file-name "elfeed-feeds.el" user-emacs-directory)
+  "Path to the personal Elfeed feed list.")
+
+(use-package elfeed
+  :bind (("C-c f" . elfeed)
+         ("C-c F" . cq-open-elfeed-feeds-file))
+  :custom
+  (elfeed-db-directory (expand-file-name "elfeed" user-emacs-directory))
+  (elfeed-search-filter "@2-months-ago +unread")
+  :config
+  ;; Keep subscriptions outside the main config to make feed edits low-friction.
+  (load cq-elfeed-feeds-file 'noerror 'nomessage)
+
+  (defun cq-open-elfeed-feeds-file ()
+    "Open the Elfeed subscriptions file."
+    (interactive)
+    (find-file cq-elfeed-feeds-file)))
 
 (use-package denote
   :hook (text-mode . denote-fontify-links-mode-maybe)
