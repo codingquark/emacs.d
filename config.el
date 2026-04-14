@@ -9,27 +9,6 @@
 (setq package-install-upgrade-built-in t)
 (package-initialize)
 
-(let ((archives-refreshed nil))
-  ;; Bootstrap use-package
-  (unless (package-installed-p 'use-package)
-    (package-refresh-contents)
-    (setq archives-refreshed t)
-    (package-install 'use-package))
-
-  (setq package-pinned-packages
-        '((consult . "gnu")
-          (marginalia . "gnu")
-          (orderless . "gnu")
-          (vertico . "gnu")))
-
-  ;; Refresh archive contents once when the completion stack is not installed yet.
-  (unless (or archives-refreshed
-              (and (package-installed-p 'consult)
-                   (package-installed-p 'marginalia)
-                   (package-installed-p 'orderless)
-                   (package-installed-p 'vertico)))
-    (package-refresh-contents)))
-
 (require 'use-package)
 (setq use-package-always-ensure t)
 
@@ -39,12 +18,12 @@
   (menu-bar-mode -1)
   (tool-bar-mode -1)
   (scroll-bar-mode -1)
-  
+
   ;; Startup configuration
   (setq inhibit-startup-message t)
   (setq initial-major-mode 'org-mode)
   (setq initial-scratch-message "")
-  
+
   ;; Start in denote directory
   ;; (setq initial-buffer-choice (lambda () (dired "~/Documents/notes")))
   )
@@ -199,16 +178,13 @@
           :stream t
           :key gptel-api-key
           :models '(openai/gpt-4.1-mini
-                    nvidia/nemotron-3-super-120b-a12b:free))))
+                    nvidia/nemotron-3-super-120b-a12b:free)))
+  (setq gptel-model 'openai/gpt-4.1-mini))
 
 (use-package gptel-magit
   :after (gptel magit)
   :hook (magit-mode . gptel-magit-install)
   :config
-  ;; Custom `:callback's to `gptel-request' receive reasoning chunks as
-  ;; `(reasoning . TEXT)' cons cells, which `gptel-magit' tries to insert as
-  ;; a string and dies. Force non-streaming so we get one final string, and
-  ;; drop any non-string events defensively.
   (defun cq-gptel-magit--forward-if-string (cb response info)
     (when (stringp response)
       (funcall cb response info)))
@@ -222,6 +198,83 @@
 
   (advice-add 'gptel-magit--request :around #'cq-gptel-magit--request-advice))
 
+(use-package erc
+  :ensure nil
+  :commands (erc erc-tls cq-erc-libera)
+  :custom
+  (erc-nick "codingquark")
+  (erc-user-full-name "codingquark")
+  (erc-server "irc.libera.chat")
+  (erc-port 6697)
+  (erc-prompt-for-password nil)
+  (erc-use-auth-source-for-nickserv-password t)
+  (erc-autojoin-timing 'ident)
+  (erc-autojoin-channels-alist '(("Libera.Chat" "#emacs")))
+  (erc-hide-list '("JOIN" "PART" "QUIT" "NICK"))
+  (erc-track-exclude-types '("JOIN" "PART" "QUIT" "NICK" "MODE"
+                             "324" "329" "332" "333" "353" "477"))
+  (erc-kill-buffer-on-part t)
+  (erc-kill-queries-on-quit t)
+  (erc-kill-server-buffer-on-quit t)
+  (erc-fill-function 'erc-fill-static)
+  (erc-fill-static-center 18)
+  :config
+  (require 'erc-services)
+  (require 'erc-match)
+  (erc-services-mode 1)
+  (erc-match-mode 1)
+  (erc-track-mode 1)
+  (erc-autojoin-mode 1)
+
+  (add-hook 'erc-mode-hook (lambda () (display-line-numbers-mode -1)))
+
+  (defun cq-erc-libera ()
+    "Connect to Libera.Chat over TLS, reading creds from auth-source."
+    (interactive)
+    (erc-tls :server "irc.libera.chat" :port 6697
+             :nick erc-nick :full-name erc-user-full-name)))
+
+(defvar cq-terminal-notifier
+    (executable-find "terminal-notifier")
+    "Path to terminal-notifier, or nil if unavailable.")
+
+  (defun cq-erc-notify (title message)
+    "Post a macOS notification with TITLE and MESSAGE via terminal-notifier."
+    (when cq-terminal-notifier
+      (call-process cq-terminal-notifier nil 0 nil
+                    "-title" (format "ERC: %s" title)
+                    "-message" message
+                    "-group" "emacs-erc"
+                    "-sender" "org.gnu.Emacs")))
+
+  (defun cq-erc-notify-match (match-type nickuserhost message)
+    "Notify on `erc-match' hits for current-nick and keywords."
+    (when (and (memq match-type '(current-nick keyword))
+               (not (get-buffer-window (current-buffer) 'visible)))
+      (let ((nick (car (split-string (or nickuserhost "") "!"))))
+        (cq-erc-notify (format "%s in %s" nick (buffer-name))
+                       message))))
+
+  (defun cq-erc-notify-query (proc parsed)
+    "Notify when a private message lands in a query buffer.
+Returns nil so ERC keeps processing the message normally."
+    (let* ((nick (car (erc-parse-user (erc-response.sender parsed))))
+           (target (car (erc-response.command-args parsed)))
+           (msg (erc-response.contents parsed)))
+      (when (and target
+                 (erc-current-nick-p target)
+                 (not (erc-current-nick-p nick)))
+        (let ((buf (erc-get-buffer nick proc)))
+          (unless (and buf (get-buffer-window buf 'visible))
+            (cq-erc-notify (format "PM from %s" nick) msg)))))
+    nil)
+
+  (with-eval-after-load 'erc-match
+    (add-hook 'erc-text-matched-hook #'cq-erc-notify-match))
+
+  (with-eval-after-load 'erc
+    (add-hook 'erc-server-PRIVMSG-functions #'cq-erc-notify-query))
+
 (use-package denote
   :hook (text-mode . denote-fontify-links-mode-maybe)
   :bind (
@@ -234,7 +287,7 @@
     ("C-c n f b" . denote-find-backlink)
     ("C-c n r" . denote-rename-file)
     ("C-c n R" . denote-rename-file-using-front-matter)
-    ("C-c n ." . cq-insert-time-stamp)
+    ;; ("C-c n ." . cq-insert-time-stamp)
     )
   :custom
   (denote-directory "~/Documents/notes")
