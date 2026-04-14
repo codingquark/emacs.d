@@ -155,7 +155,7 @@
          ("C-c F" . cq-open-elfeed-feeds-file))
   :custom
   (elfeed-db-directory (expand-file-name "elfeed" user-emacs-directory))
-  (elfeed-search-filter "@6-months-ago +unread")
+  (elfeed-search-filter "@2-months-ago +unread")
   :config
   ;; Keep subscriptions outside the main config to make feed edits low-friction.
   (load cq-elfeed-feeds-file 'noerror 'nomessage)
@@ -173,8 +173,41 @@
 (use-package magit
   :bind (("C-x g" . magit-status)))
 
+(use-package gptel
+  :commands (gptel gptel-send gptel-menu)
+  :config
+  (setq gptel-backend
+        (gptel-make-openai "OpenRouter"
+          :host "openrouter.ai"
+          :endpoint "/api/v1/chat/completions"
+          :stream t
+          :key gptel-api-key
+          :models '(openai/gpt-4.1-mini
+                    nvidia/nemotron-3-super-120b-a12b:free))))
+
+(use-package gptel-magit
+  :after (gptel magit)
+  :hook (magit-mode . gptel-magit-install)
+  :config
+  ;; Custom `:callback's to `gptel-request' receive reasoning chunks as
+  ;; `(reasoning . TEXT)' cons cells, which `gptel-magit' tries to insert as
+  ;; a string and dies. Force non-streaming so we get one final string, and
+  ;; drop any non-string events defensively.
+  (defun cq-gptel-magit--forward-if-string (cb response info)
+    (when (stringp response)
+      (funcall cb response info)))
+
+  (defun cq-gptel-magit--request-advice (orig-fn prompt &rest args)
+    (let* ((cb (plist-get args :callback))
+           (wrapped (apply-partially #'cq-gptel-magit--forward-if-string cb))
+           (args (plist-put args :stream nil))
+           (args (plist-put args :callback wrapped)))
+      (apply orig-fn prompt args)))
+
+  (advice-add 'gptel-magit--request :around #'cq-gptel-magit--request-advice))
+
 (use-package denote
-  :hook (text-mode . denote-fontify-links-mode)
+  :hook (text-mode . denote-fontify-links-mode-maybe)
   :bind (
     ("C-c n n" . denote)
     ("C-c n D" . cq-open-denote-directory)
@@ -215,7 +248,6 @@
   :after denote)
 
 (use-package olivetti
-  :hook ((org-mode . olivetti-mode))
   :config
   (setq olivetti-body-width 80))
 

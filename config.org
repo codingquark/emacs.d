@@ -4,11 +4,19 @@
 
 * Package Management
 
-First, we need to set up package management with MELPA Stable and ensure use-package is available.
+Set up package management with MELPA Stable as the default preference,
+plus regular MELPA for packages that are only published there.
 
 #+BEGIN_SRC emacs-lisp
 (require 'package)
+(add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
 (add-to-list 'package-archives '("melpa-stable" . "https://stable.melpa.org/packages/") t)
+(setq package-archive-priorities
+      '(("gnu" . 30)
+        ("nongnu" . 20)
+        ("melpa-stable" . 10)
+        ("melpa" . 0)))
+(setq package-install-upgrade-built-in t)
 (package-initialize)
 
 ;; Bootstrap use-package
@@ -237,13 +245,53 @@ Set up Magit for repository status and everyday Git workflows.
   :bind (("C-x g" . magit-status)))
 #+END_SRC
 
+* AI
+Set up gptel.
+#+BEGIN_SRC emacs-lisp
+  (use-package gptel
+    :commands (gptel gptel-send gptel-menu)
+    :config
+    (setq gptel-backend
+          (gptel-make-openai "OpenRouter"
+            :host "openrouter.ai"
+            :endpoint "/api/v1/chat/completions"
+            :stream t
+            :key gptel-api-key
+            :models '(openai/gpt-4.1-mini
+                      nvidia/nemotron-3-super-120b-a12b:free))))
+#+END_SRC
+
+Setup gptel-magit to write commit messages.
+#+BEGIN_SRC emacs-lisp
+  (use-package gptel-magit
+    :after (gptel magit)
+    :hook (magit-mode . gptel-magit-install)
+    :config
+    ;; Custom `:callback's to `gptel-request' receive reasoning chunks as
+    ;; `(reasoning . TEXT)' cons cells, which `gptel-magit' tries to insert as
+    ;; a string and dies. Force non-streaming so we get one final string, and
+    ;; drop any non-string events defensively.
+    (defun cq-gptel-magit--forward-if-string (cb response info)
+      (when (stringp response)
+        (funcall cb response info)))
+
+    (defun cq-gptel-magit--request-advice (orig-fn prompt &rest args)
+      (let* ((cb (plist-get args :callback))
+             (wrapped (apply-partially #'cq-gptel-magit--forward-if-string cb))
+             (args (plist-put args :stream nil))
+             (args (plist-put args :callback wrapped)))
+        (apply orig-fn prompt args)))
+
+    (advice-add 'gptel-magit--request :around #'cq-gptel-magit--request-advice))
+#+END_SRC
+
 * Note Taking
 
 Configure Denote for simple note-taking and knowledge management.
 
 #+BEGIN_SRC emacs-lisp
 (use-package denote
-  :hook (text-mode . denote-fontify-links-mode)
+  :hook (text-mode . denote-fontify-links-mode-maybe)
   :bind (
     ("C-c n n" . denote)
     ("C-c n D" . cq-open-denote-directory)
@@ -292,7 +340,6 @@ Configure olivetti for distraction-free writing with centered text.
 
 #+BEGIN_SRC emacs-lisp
   (use-package olivetti
-    :hook ((org-mode . olivetti-mode))
     :config
     (setq olivetti-body-width 80))
 #+END_SRC
