@@ -163,6 +163,9 @@
   :hook ((dired-mode . denote-dired-mode)
          (dired-mode . dired-hide-details-mode)))
 
+(use-package magit
+  :bind (("C-x g" . magit-status)))
+
 (use-package denote
   :hook (text-mode . denote-fontify-links-mode)
   :bind (
