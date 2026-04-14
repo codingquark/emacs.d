@@ -246,7 +246,36 @@ Set up Magit for repository status and everyday Git workflows.
 #+END_SRC
 
 * AI
-Set up gptel.
+
+The AI integration is built around [[https://github.com/karthink/gptel][gptel]], a lightweight LLM client
+that speaks several provider protocols. Rather than subscribe to a
+single vendor, I route everything through [[https://openrouter.ai][OpenRouter]], which re-exports
+dozens of models behind one OpenAI-compatible endpoint. That decision
+drives the rest of this section: the backend is OpenAI-shaped but
+pointed at OpenRouter's host, and the model list is a curated slice of
+what OpenRouter offers.
+
+** Backend
+
+~gptel-make-openai~ registers a backend and returns the backend
+struct; assigning that return value to ~gptel-backend~ makes it the
+active one for new chats. The API key lives outside this file in
+~gptel-api-key~ (set in a private init fragment) so the config can be
+committed without leaking secrets.
+
+Streaming is left on because in an interactive chat buffer you want
+tokens to appear as they arrive. Note that ~gptel-magit~ will
+selectively override this below, for reasons explained there.
+
+The model list is deliberately short. Additional entries are
+available interactively via ~gptel-menu~. The default model used for
+new requests is ~gptel-model~, which gptel initialises to
+~gpt-4o-mini~ globally --- a name that has nothing to do with the
+OpenRouter backend registered here. gptel does sanitise an
+unsupported model by falling back to the first entry of the active
+backend's list, so things happen to work, but relying on that is
+fragile. Setting ~gptel-model~ explicitly makes the default honest.
+
 #+BEGIN_SRC emacs-lisp
   (use-package gptel
     :commands (gptel gptel-send gptel-menu)
@@ -258,19 +287,85 @@ Set up gptel.
             :stream t
             :key gptel-api-key
             :models '(openai/gpt-4.1-mini
-                      nvidia/nemotron-3-super-120b-a12b:free))))
+                      nvidia/nemotron-3-super-120b-a12b:free)))
+    (setq gptel-model 'openai/gpt-4.1-mini))
 #+END_SRC
 
-Setup gptel-magit to write commit messages.
+** Commit messages with gptel-magit
+
+[[https://github.com/ragnard/gptel-magit][gptel-magit]] hooks into magit so that ~M-g~ in a commit buffer calls
+out to gptel with the staged diff and a commit-message prompt,
+inserting the result into the commit buffer. The plain installation
+would be a one-liner; most of what follows is an advice wrapper
+that exists for a reason worth explaining.
+
+*** Why an advice wrapper is needed
+
+~gptel-magit~ was written against a simple callback contract: gptel
+calls the callback once with the finished assistant message as a
+string, and gptel-magit inserts that string into the commit buffer.
+Two unrelated gptel behaviours break that contract.
+
+The first is generic to *any* streamed response. With streaming on,
+gptel invokes the callback repeatedly, once per text chunk, and a
+final time with ~t~ to signal end-of-stream (see
+~gptel-request.el~ around line 1873). ~gptel-magit~'s insert-once
+callback would therefore fire many times --- inserting partial
+tokens into the commit buffer --- and then explode on the ~t~.
+
+The second is specific to reasoning models. In addition to the text
+stream, gptel exposes reasoning tokens as separate callback events
+packaged as ~(reasoning . TEXT)~ cons cells. ~gptel-magit~ receives
+one of those, tries to ~insert~ it, and dies inside a process
+sentinel with ~char-or-string-p~. Importantly, reasoning events can
+arrive even on a *non-streaming* request: if the final response
+contains a ~<think>~ block, or the backend stashed reasoning in the
+~info~ plist, gptel emits a reasoning callback before the final
+string (see ~gptel-request.el~ around lines 2419 and 2429). Turning
+streaming off therefore does not make the reasoning problem go away.
+
+Note that ~gptel-include-reasoning~ does *not* help here: that
+variable only governs how reasoning is displayed in gptel's own chat
+buffers, not what a user-supplied ~:callback~ receives.
+
+*** Solution: force non-streaming, filter non-strings
+
+Two changes address the two problems, one each. Forcing ~:stream nil~
+solves the chunking problem: gptel's non-streaming path produces a
+single final-answer callback invocation instead of a sequence of
+chunks. That alone is enough to stop ~gptel-magit~ inserting partial
+tokens.
+
+It is *not* enough to stop the reasoning callback. For that, the
+advice wraps the callback in a filter that passes strings through
+and silently drops everything else. This filter is load-bearing, not
+defensive: non-streamed requests still emit ~(reasoning . TEXT)~
+ahead of the final answer whenever reasoning is present, and without
+the filter ~gptel-magit~ would crash on exactly the kind of model
+you most want commit messages from.
+
+There is one subtlety that shapes how the wrapper is constructed.
+~config.el~ is tangled without a ~lexical-binding~ cookie, so a
+plain ~(lambda (response info) ...)~ closing over a local ~cb~ would
+not survive the async gap --- by the time gptel invokes it, the
+~let~ has exited and ~cb~ is unbound. ~apply-partially~ sidesteps
+this by building a real closure through function composition rather
+than variable capture, so it works the same in dynamic and lexical
+scope. The helper it partially applies is therefore a plain named
+function that takes the original callback as an extra first
+argument.
+
+A second detail: ~gptel-magit--request~ takes the prompt as a
+positional first argument and the rest as keyword args, so the
+advice must split ~prompt~ off before touching the plist ---
+otherwise ~plist-get~ would try to read the diff string as a key and
+fail.
+
 #+BEGIN_SRC emacs-lisp
   (use-package gptel-magit
     :after (gptel magit)
     :hook (magit-mode . gptel-magit-install)
     :config
-    ;; Custom `:callback's to `gptel-request' receive reasoning chunks as
-    ;; `(reasoning . TEXT)' cons cells, which `gptel-magit' tries to insert as
-    ;; a string and dies. Force non-streaming so we get one final string, and
-    ;; drop any non-string events defensively.
     (defun cq-gptel-magit--forward-if-string (cb response info)
       (when (stringp response)
         (funcall cb response info)))
