@@ -56,6 +56,23 @@ Load the Modus Vivendi theme for a clean dark interface.
   (load-theme 'modus-operandi t))
 #+END_SRC
 
+* Line Highlighting
+
+[[https://protesilaos.com/emacs/lin][Lin]] is Prot's opinionated wrapper around ~hl-line-mode~. In modes that are
+primarily navigational — dired, ibuffer, magit lists, occur, elfeed-search,
+etc. — the current line behaves as a selection indicator rather than a
+reading aid, and ~lin~ restyles ~hl-line~ to match. ~lin-global-mode~ enables
+it in the curated set of modes Prot maintains upstream, so new buffers get
+the treatment automatically without per-hook wiring.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package lin
+    :custom
+    (lin-face 'lin-blue)
+    :config
+    (lin-global-mode 1))
+#+END_SRC
+
 * Font Configuration
 
 Configure the core font faces: keep code and tabular buffers on IBM Plex Mono,

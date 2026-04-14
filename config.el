@@ -32,6 +32,12 @@
   :init
   (load-theme 'modus-operandi t))
 
+(use-package lin
+  :custom
+  (lin-face 'lin-blue)
+  :config
+  (lin-global-mode 1))
+
 (defconst cq-variable-pitch-font "Charter"
   "Font family used by variable-pitch faces.")
 
@@ -178,8 +184,9 @@
           :stream t
           :key gptel-api-key
           :models '(openai/gpt-4.1-mini
-                    nvidia/nemotron-3-super-120b-a12b:free)))
-  (setq gptel-model 'openai/gpt-4.1-mini))
+                    nvidia/nemotron-3-super-120b-a12b:free
+                    minimax/minimax-m2.7)))
+  (setq gptel-model 'minimax/minimax-m2.7))
 
 (use-package gptel-magit
   :after (gptel magit)
