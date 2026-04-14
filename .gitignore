@@ -55,6 +55,9 @@ dist/
 /url/
 /elfeed/
 
+# Transient (magit etc.) history
+/transient/
+
 # Smex
 /smex-items
 
