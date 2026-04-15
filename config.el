@@ -328,6 +328,8 @@ Returns nil so ERC keeps processing the message normally."
   (setq olivetti-body-width 80))
 
 (use-package markdown-mode
+  :custom
+  (markdown-command "pandoc")
   :mode (("README\\.md\\'" . gfm-mode)
          ("\\.md\\'" . markdown-mode)
          ("\\.markdown\\'" . markdown-mode)))

@@ -564,6 +564,8 @@ Configure markdown-mode for editing markdown files.
 
 #+BEGIN_SRC emacs-lisp
   (use-package markdown-mode
+    :custom
+    (markdown-command "pandoc")
     :mode (("README\\.md\\'" . gfm-mode)
            ("\\.md\\'" . markdown-mode)
            ("\\.markdown\\'" . markdown-mode)))
