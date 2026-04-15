@@ -6,7 +6,10 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(package-selected-packages nil))
+ '(package-selected-packages
+   '(denote-journal denote-menu elfeed embark-consult gptel-magit helpful
+                    lin marginalia markdown-mode modus-themes olivetti
+                    orderless prescient vertico vertico-prescient)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.

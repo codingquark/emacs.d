@@ -92,6 +92,17 @@
   (completion-category-defaults nil)
   (completion-category-overrides '((file (styles partial-completion)))))
 
+(use-package prescient
+  :config
+  (prescient-persist-mode 1))
+
+(use-package vertico-prescient
+  :after (vertico prescient)
+  :custom
+  (vertico-prescient-enable-filtering nil)
+  :config
+  (vertico-prescient-mode 1))
+
 (use-package marginalia
   :init
   (marginalia-mode 1))
