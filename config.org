@@ -599,11 +599,6 @@ changed interactively.
 #+BEGIN_SRC emacs-lisp
   (use-package url
     :ensure nil
-    :bind (("C-c h b" . cq-home-assistant-show-default-buffer)
-           ("C-c h e" . cq-home-assistant-set-default-entity)
-           ("C-c h m" . cq-home-assistant-mode)
-           ("C-c h r" . cq-home-assistant-refresh)
-           ("C-c h s" . cq-home-assistant-read-state))
     :config
     (require 'auth-source)
     (require 'json)
@@ -647,6 +642,8 @@ changed interactively.
     (defvar cq-home-assistant--mode-line "")
     (defvar cq-home-assistant--timer nil)
     (defvar cq-home-assistant--request-in-flight nil)
+    (defvar cq-home-assistant-prefix-map (make-sparse-keymap)
+      "Prefix keymap for Home Assistant commands.")
     (defconst cq-home-assistant--mode-line-form
       '(:eval
         (and cq-home-assistant-mode
@@ -874,5 +871,12 @@ With SILENT non-nil, suppress the minibuffer message."
               (delete cq-home-assistant--mode-line-form global-mode-string))
         (cq-home-assistant--stop-timer)
         (setq cq-home-assistant--mode-line "")
-        (force-mode-line-update t))))
+        (force-mode-line-update t)))
+
+    (keymap-set cq-home-assistant-prefix-map "b" #'cq-home-assistant-show-default-buffer)
+    (keymap-set cq-home-assistant-prefix-map "e" #'cq-home-assistant-set-default-entity)
+    (keymap-set cq-home-assistant-prefix-map "m" #'cq-home-assistant-mode)
+    (keymap-set cq-home-assistant-prefix-map "r" #'cq-home-assistant-refresh)
+    (keymap-set cq-home-assistant-prefix-map "s" #'cq-home-assistant-read-state)
+    (keymap-set global-map "C-c h" cq-home-assistant-prefix-map))
 #+END_SRC
