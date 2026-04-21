@@ -6,6 +6,7 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
+ '(cq-home-assistant-entity-id "sensor.weatherstation_ground_bme280_bme280_temperature")
  '(package-selected-packages
    '(denote-journal denote-menu elfeed embark-consult gptel-magit helpful
                     lin marginalia markdown-mode modus-themes olivetti
