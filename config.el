@@ -32,6 +32,7 @@
   )
 
 (use-package modus-themes
+  :bind (("<f5>" . modus-themes-toggle))
   :init
   (load-theme 'modus-operandi t))
 
