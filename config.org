@@ -593,7 +593,7 @@ Talk to the local Home Assistant REST API from inside Emacs. The token stays
 in =~/.authinfo.gpg= so nothing secret lands in this file:
 
 #+BEGIN_EXAMPLE
-machine homeassistant.lan login homeassistant password YOUR_LONG_LIVED_ACCESS_TOKEN
+machine homeassistant.home.arpa login homeassistant password YOUR_LONG_LIVED_ACCESS_TOKEN
 #+END_EXAMPLE
 
 The implementation lives in ~lisp/cq-home-assistant.el~ so it can be loaded

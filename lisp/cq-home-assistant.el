@@ -8,7 +8,7 @@
 ;; Talk to the local Home Assistant REST API from inside Emacs.
 ;; The token is expected in `~/.authinfo.gpg':
 ;;
-;;   machine homeassistant.lan login homeassistant password YOUR_TOKEN
+;;   machine homeassistant.home.arpa login homeassistant password YOUR_TOKEN
 ;;
 ;; The main entry point is the global minor mode `cq-home-assistant-mode',
 ;; which displays the configured entity state in the mode line and refreshes
@@ -25,11 +25,11 @@
   "Fetch Home Assistant entity state inside Emacs."
   :group 'applications)
 
-(defcustom cq-home-assistant-base-url "http://homeassistant.lan:8123"
+(defcustom cq-home-assistant-base-url "http://homeassistant.home.arpa:8123"
   "Base URL for the local Home Assistant instance."
   :type 'string)
 
-(defcustom cq-home-assistant-auth-source-host "homeassistant.lan"
+(defcustom cq-home-assistant-auth-source-host "homeassistant.home.arpa"
   "Auth-source host used to look up the Home Assistant token."
   :type 'string)
 
