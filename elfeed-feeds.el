@@ -7,4 +7,5 @@
         ("https://geohot.github.io/blog/feed.xml" programming)
         ("http://blog.stephenwolfram.com/feed/" science)
         ("https://vitalik.eth.limo/feed.xml" crypto)
-        ("https://stephango.com/feed.xml" blogs)))
+        ("https://stephango.com/feed.xml" blogs)
+        ("https://ranprieur.com/feed.php" blogs)))
