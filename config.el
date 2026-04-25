@@ -31,6 +31,14 @@
   ;; (setq initial-buffer-choice (lambda () (dired "~/Documents/notes")))
   )
 
+(use-package server
+  :ensure nil
+  :init
+  (setq server-use-tcp t)
+  :config
+  (unless (or noninteractive (server-running-p))
+    (server-start)))
+
 (use-package modus-themes
   :bind (("<f5>" . modus-themes-toggle))
   :init
@@ -296,6 +304,28 @@ Returns nil so ERC keeps processing the message normally."
     "Open the Elfeed subscriptions file."
     (interactive)
     (find-file cq-elfeed-feeds-file)))
+
+(defconst cq-reading-list-file
+  (expand-file-name
+   "Documents/notes/20230206T124634--reading-list__lists_productivity.org"
+   "~")
+  "Denote note used as the reading-list capture target.")
+
+(use-package org-capture
+  :ensure nil
+  :demand t
+  :config
+  (add-to-list 'org-capture-templates
+               `("w" "Web page for reading list" entry
+                 (file+headline ,cq-reading-list-file "Reading list")
+                 "* TODO %:description\n:PROPERTIES:\n:CAPTURED: %U\n:URL: %:link\n:END:\n\n%:annotation\n\n#+begin_quote\n%i\n#+end_quote\n\n%?"
+                 :empty-lines 1)))
+
+(use-package org-protocol
+  :ensure nil
+  :demand t
+  :custom
+  (org-protocol-default-template-key "w"))
 
 (use-package denote
   :hook (text-mode . denote-fontify-links-mode-maybe)
