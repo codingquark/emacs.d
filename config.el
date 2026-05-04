@@ -71,7 +71,6 @@
   (setq auto-save-file-name-transforms '((".*" "~/.config/emacs/auto-save-list/" t)))
 
   ;; Visual aids
-  (global-display-line-numbers-mode 1)
   (show-paren-mode 1)
   ;; macOS compatibility
   (setq dired-use-ls-dired nil)
