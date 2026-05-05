@@ -177,123 +177,72 @@
 (use-package magit
   :bind (("C-x g" . magit-status)))
 
-(use-package gptel
-  :commands (gptel gptel-send gptel-menu)
-  :config
-  (setq gptel-backend
-        (gptel-make-openai "OpenRouter"
-          :host "openrouter.ai"
-          :endpoint "/api/v1/chat/completions"
-          :stream t
-          :key gptel-api-key
-          :models '(z-ai/glm-5.1
-                    nvidia/nemotron-3-super-120b-a12b:free
-                    minimax/minimax-m2.7)))
-  (setq gptel-model 'minimax/minimax-m2.7))
+(defconst cq-gptel-openrouter-web-search-tool-name "openrouter_web_search"
+    "Name of the gptel tool entry that enables OpenRouter web search.")
 
-(defconst cq-serper-search-url "https://google.serper.dev/search"
-  "Serper.dev endpoint used by the gptel web search tool.")
+  (defconst cq-gptel-openrouter-web-search-tool
+    '(:type "openrouter:web_search"
+      :parameters (:max_results 3
+                   :max_total_results 3
+                   :search_context_size "low"))
+    "OpenRouter server-tool spec used when web search is enabled.")
 
-(defun cq--serper-api-key ()
-  "Retrieve the Serper.dev API key from auth-source."
-  (require 'auth-source)
-  (let* ((auth (car (auth-source-search :host "serper.dev" :max 1)))
-         (secret (plist-get auth :secret)))
-    (cond ((functionp secret) (funcall secret))
-          ((stringp secret) secret)
-          (t (user-error "No Serper API key found in auth-source for host `serper.dev'")))))
+  (defun cq-gptel--openrouter-web-search-tool-p (tool)
+    "Return non-nil when TOOL is the OpenRouter web search sentinel."
+    (equal (gptel-tool-name tool) cq-gptel-openrouter-web-search-tool-name))
 
-(defun cq--serper-normalize-query (query)
-  "Validate and return QUERY for use with Serper."
-  (unless (and (stringp query) (string-match-p "\\S-" query))
-    (user-error "Serper search query must be a non-empty string"))
-  query)
+  (defun cq-gptel-toggle-web-search (&optional arg)
+    "Toggle the OpenRouter web search tool in `gptel-tools'.
+With prefix ARG, enable when ARG is positive and disable otherwise."
+    (interactive "P")
+    (require 'gptel)
+    (let* ((tool (gptel-get-tool (list "openrouter" cq-gptel-openrouter-web-search-tool-name)))
+           (enabled (memq tool gptel-tools))
+           (enable (if arg
+                       (> (prefix-numeric-value arg) 0)
+                     (not enabled))))
+      (setq gptel-tools
+            (if enable
+                (if enabled gptel-tools (cons tool gptel-tools))
+              (delq tool gptel-tools))))
+    (message "OpenRouter web search %s"
+             (if (memq (gptel-get-tool (list "openrouter" cq-gptel-openrouter-web-search-tool-name))
+                       gptel-tools)
+                 "enabled" "disabled")))
 
-(defun cq--serper-read-json (body)
-  "Parse Serper JSON response BODY as an alist."
-  (require 'json)
-  (with-temp-buffer
-    (insert body)
-    (goto-char (point-min))
-    (let ((json-object-type 'alist)
-          (json-array-type 'vector))
-      (json-read))))
+  (use-package gptel
+    :commands (gptel gptel-send gptel-menu gptel-tools cq-gptel-toggle-web-search)
+    :config
+    (require 'cl-lib)
 
-(defun cq--serper-request (query)
-  "Return the decoded Serper response for QUERY."
-  (require 'json)
-  (unless (executable-find "curl")
-    (user-error "curl is required for Serper search but was not found on PATH"))
-  (let* ((api-key (cq--serper-api-key))
-         (json-payload (json-encode `((q . ,query)))))
-    (with-temp-buffer
-      (insert json-payload)
-      (let ((exit-code
-             (call-process-region
-              (point-min) (point-max)
-              "curl"
-              t t nil
-              "-sL" "-w" "\n%{http_code}"
-              "-X" "POST"
-              cq-serper-search-url
-              "-H" "Content-Type: application/json"
-              "-H" (concat "X-API-KEY: " api-key)
-              "-d" "@-")))
-        (let* ((response (buffer-string))
-               (status-start
-                (string-match "\n\\([0-9][0-9][0-9]\\)[[:space:]]*\\'" response)))
-          (unless status-start
-            (error "Serper request failed: no HTTP status in curl response"))
-          (let ((http-code (string-to-number (match-string 1 response)))
-                (body (substring response 0 status-start)))
-            (when (or (/= exit-code 0) (< http-code 200) (>= http-code 300))
-              (error "Serper request failed (curl exit=%d, HTTP %d)"
-                     exit-code http-code))
-            (cq--serper-read-json body)))))))
+    (gptel-make-tool
+     :function (lambda ()
+                 "OpenRouter web search is handled server-side.")
+     :name cq-gptel-openrouter-web-search-tool-name
+     :description "Allow OpenRouter to run paid web searches when the model decides current information is needed."
+     :args nil
+     :category "openrouter")
 
-(defun cq--serper-format-result (result index)
-  "Format one Serper RESULT at one-based INDEX."
-  (let ((title (or (cdr (assoc 'title result)) "No title"))
-        (snippet (or (cdr (assoc 'snippet result)) ""))
-        (link (or (cdr (assoc 'link result)) "")))
-    (format "[%d] %s\nURL: %s\n%s" index title link snippet)))
+    (cl-defmethod gptel--parse-tools :around ((backend gptel-openai) tools)
+      "Translate the OpenRouter web search sentinel into a server tool."
+      (let* ((use-web-search (cl-some #'cq-gptel--openrouter-web-search-tool-p tools))
+             (client-tools (cl-remove-if #'cq-gptel--openrouter-web-search-tool-p tools))
+             (parsed-tools (cl-call-next-method backend client-tools)))
+        (if use-web-search
+            (vconcat (vector cq-gptel-openrouter-web-search-tool) parsed-tools)
+          parsed-tools)))
 
-(defun cq--serper-format-response (query response)
-  "Format Serper RESPONSE for gptel."
-  (let ((organic (cdr (assoc 'organic response)))
-        (parts nil))
-    (if (and (vectorp organic) (> (length organic) 0))
-        (dotimes (i (min 5 (length organic)))
-          (push (cq--serper-format-result (aref organic i) (1+ i)) parts))
-      (push "No organic search results found." parts))
-    (concat (format "Search results for: %s\n\n" query)
-            (mapconcat #'identity (nreverse parts) "\n\n"))))
-
-(defun cq--serper-search (query)
-  "Search the web using Serper.dev for QUERY; return titles/snippets/URLs."
-  (let ((query (cq--serper-normalize-query query)))
-    (cq--serper-format-response query (cq--serper-request query))))
-
-(defun cq--gptel-register-serper-tool ()
-  "Register and select the Serper web search tool for gptel."
-  (let ((tool (gptel-make-tool
-               :function #'cq--serper-search
-               :name "web_search"
-               :description "Search the web using Google via Serper.dev. Returns up to five organic results with titles, snippets, and URLs."
-               :args (list '(:name "query"
-                             :type string
-                             :description "The search query string."))
-               :category "web")))
-    (setq gptel-tools
-          (cons tool
-                (delq nil
-                      (mapcar (lambda (existing)
-                                (unless (equal (gptel-tool-name existing) "web_search")
-                                  existing))
-                              gptel-tools))))))
-
-(with-eval-after-load 'gptel
-  (cq--gptel-register-serper-tool))
+    (setq gptel-backend
+          (gptel-make-openai "OpenRouter"
+            :host "openrouter.ai"
+            :endpoint "/api/v1/chat/completions"
+            :stream t
+            :key gptel-api-key
+            :models '(z-ai/glm-5.1
+                      nvidia/nemotron-3-super-120b-a12b:free
+                      minimax/minimax-m2.7))
+          gptel-default-mode 'org-mode)
+    (setq gptel-model 'z-ai/glm-5.1))
 
 (use-package gptel-magit
   :after (gptel magit)
