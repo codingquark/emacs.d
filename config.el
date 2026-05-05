@@ -285,6 +285,96 @@ Returns nil so ERC keeps processing the message normally."
   (with-eval-after-load 'erc
     (add-hook 'erc-server-PRIVMSG-functions #'cq-erc-notify-query))
 
+(dolist (dir '("/opt/homebrew/opt/notmuch/share/emacs/site-lisp/notmuch"
+               "/usr/local/opt/notmuch/share/emacs/site-lisp/notmuch"))
+  (when (file-directory-p dir)
+    (add-to-list 'load-path dir)))
+
+(defvar cq-email-settings-file
+  (expand-file-name "private/email.el" user-emacs-directory)
+  "Path to private email settings that should not be committed.")
+
+(defvar cq-email-full-name nil
+  "Personal full name used when composing mail.")
+
+(defvar cq-email-address nil
+  "Default personal email address used when composing mail.")
+
+(defvar cq-notmuch-fcc-dirs nil
+  "Private notmuch sent-mail folder rules.")
+
+(defvar cq-notmuch-draft-folder nil
+  "Private notmuch draft folder.")
+
+(defvar cq-notmuch-identities nil
+  "Private notmuch identities.")
+
+(load cq-email-settings-file 'noerror 'nomessage)
+
+(when cq-email-full-name
+  (setq user-full-name cq-email-full-name))
+
+(when cq-email-address
+  (setq user-mail-address cq-email-address))
+
+(use-package sendmail
+  :ensure nil
+  :custom
+  (sendmail-program (or (executable-find "msmtp") "msmtp"))
+  (send-mail-function #'sendmail-send-it)
+  (mail-specify-envelope-from t)
+  (mail-envelope-from 'header))
+
+(use-package message
+  :ensure nil
+  :custom
+  (message-kill-buffer-on-exit t)
+  (message-send-mail-function #'message-send-mail-with-sendmail)
+  (message-sendmail-envelope-from 'header))
+
+(use-package notmuch
+  :ensure nil
+  :commands (notmuch notmuch-search notmuch-mua-new-mail)
+  :bind (("C-c m" . notmuch)
+         ("C-c M" . notmuch-mua-new-mail))
+  :custom
+  (notmuch-command (or (executable-find "notmuch") "notmuch"))
+  (notmuch-search-oldest-first nil)
+  (notmuch-address-command 'internal)
+  (notmuch-address-internal-completion '(received nil))
+  (notmuch-address-save-filename
+   (expand-file-name "var/notmuch-addresses.el" user-emacs-directory))
+  :config
+  (make-directory (file-name-directory notmuch-address-save-filename) t)
+
+  (when cq-notmuch-fcc-dirs
+    (setq notmuch-fcc-dirs cq-notmuch-fcc-dirs))
+
+  (when cq-notmuch-draft-folder
+    (setq notmuch-draft-folder cq-notmuch-draft-folder))
+
+  (when cq-notmuch-identities
+    (setq notmuch-identities cq-notmuch-identities))
+
+  (defun cq-notmuch-sync-and-refresh ()
+    "Run mbsync, import new mail into notmuch, and refresh notmuch buffers."
+    (interactive)
+    (unless (executable-find "mbsync")
+      (user-error "mbsync was not found on PATH"))
+    (let ((buffer (get-buffer-create "*mbsync*")))
+      (message "Syncing mail with mbsync...")
+      (with-current-buffer buffer
+        (erase-buffer))
+      (unless (zerop (call-process "mbsync" nil buffer t "-a"))
+        (display-buffer buffer)
+        (user-error "mbsync failed; see %s" (buffer-name buffer))))
+    (notmuch-poll)
+    (notmuch-refresh-all-buffers)
+    (message "Mail sync complete"))
+
+  (define-key notmuch-common-keymap "G" #'cq-notmuch-sync-and-refresh)
+  (define-key notmuch-common-keymap "M" #'notmuch-mua-new-mail))
+
 (defvar cq-elfeed-feeds-file
   (expand-file-name "elfeed-feeds.el" user-emacs-directory)
   "Path to the personal Elfeed feed list.")

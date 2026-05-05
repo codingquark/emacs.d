@@ -34,6 +34,7 @@ flycheck_*.el
 
 # Projectile
 .projectile
+/projects
 
 # Directory configuration
 .dir-locals.el
@@ -77,6 +78,10 @@ package-quickstart.el
 
 # Custom file
 custom.el
+
+# Private machine-local configuration
+/private/
+/var/
 
 # Backups
 backups/
