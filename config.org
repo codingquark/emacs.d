@@ -356,9 +356,14 @@ With prefix ARG, enable when ARG is positive and disable otherwise."
             :endpoint "/api/v1/chat/completions"
             :stream t
             :key gptel-api-key
-            :models '(z-ai/glm-5.1
+            :models '((z-ai/glm-5.1 :request-params (:reasoning (:effort "high")))
                       nvidia/nemotron-3-super-120b-a12b:free
-                      minimax/minimax-m2.7))
+                      minimax/minimax-m2.7
+                      anthropic/claude-sonnet-4.6
+                      google/gemini-3-flash-preview
+                      (x-ai/grok-4.3 :request-params (:reasoning (:effort "high")))
+                      (anthropic/claude-opus-4.7 :request-params (:reasoning (:effort "high")))
+                      (openai/gpt-5.5 :request-params (:reasoning (:effort "high")))))
           gptel-default-mode 'org-mode)
     (setq gptel-model 'z-ai/glm-5.1))
 #+END_SRC
