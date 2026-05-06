@@ -1,0 +1,3 @@
+[submodule "lisp/gptel-prompts"]
+	path = lisp/gptel-prompts
+	url = https://github.com/jwiegley/gptel-prompts.git

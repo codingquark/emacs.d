@@ -368,6 +368,28 @@ With prefix ARG, enable when ARG is positive and disable otherwise."
     (setq gptel-model 'z-ai/glm-5.1))
 #+END_SRC
 
+** Prompts
+
+[[https://github.com/jwiegley/gptel-prompts][gptel-prompts]] manages ~gptel-directives~ as individual files under
+~gptel-prompts-directory~ (defaults to =~/.config/emacs/prompts=).
+Each file becomes a named directive; supported formats include plain
+text (~.txt~, ~.md~, ~.org~), Emacs Lisp data (~.eld~) and code
+(~.el~), JSON (~.json~), and Prompt Poet / Jinja templates (~.poet~,
+~.j2~). File watchers keep ~gptel-directives~ in sync automatically.
+
+#+BEGIN_SRC emacs-lisp
+  (add-to-list 'load-path
+               (expand-file-name "lisp/gptel-prompts" user-emacs-directory))
+
+  (use-package gptel-prompts
+    :ensure nil
+    :after (gptel)
+    :demand t
+    :config
+    (gptel-prompts-update)
+    (gptel-prompts-add-update-watchers))
+#+END_SRC
+
 ** Web Search
 Web search is available via OpenRouter's ~openrouter:web_search~ server
 tool, exposed as a normal ~gptel-tools~ entry named

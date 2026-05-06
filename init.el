@@ -8,9 +8,10 @@
  ;; If there is more than one, they won't work right.
  '(cq-home-assistant-entity-id "sensor.weatherstation_ground_bme280_bme280_temperature")
  '(package-selected-packages
-   '(denote-journal denote-menu elfeed embark-consult gptel-magit helpful
-                    lin marginalia markdown-mode modus-themes olivetti
-                    orderless prescient vertico vertico-prescient)))
+   '(denote-journal denote-menu elfeed embark-consult gptel-magit
+                    gptel-prompts helpful lin marginalia markdown-mode
+                    modus-themes olivetti orderless prescient vertico
+                    vertico-prescient)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.

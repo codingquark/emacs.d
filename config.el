@@ -249,6 +249,17 @@ With prefix ARG, enable when ARG is positive and disable otherwise."
           gptel-default-mode 'org-mode)
     (setq gptel-model 'z-ai/glm-5.1))
 
+(add-to-list 'load-path
+             (expand-file-name "lisp/gptel-prompts" user-emacs-directory))
+
+(use-package gptel-prompts
+  :ensure nil
+  :after (gptel)
+  :demand t
+  :config
+  (gptel-prompts-update)
+  (gptel-prompts-add-update-watchers))
+
 (use-package gptel-magit
   :after (gptel magit)
   :hook (magit-mode . gptel-magit-install)
