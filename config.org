@@ -261,6 +261,10 @@ Set up Magit for repository status and everyday Git workflows.
 #+BEGIN_SRC emacs-lisp
 (use-package magit
   :bind (("C-x g" . magit-status)))
+
+(use-package magit-delta
+  :after magit
+  :hook (magit-mode . magit-delta-mode))
 #+END_SRC
 
 * AI

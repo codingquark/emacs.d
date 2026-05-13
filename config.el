@@ -177,6 +177,10 @@
 (use-package magit
   :bind (("C-x g" . magit-status)))
 
+(use-package magit-delta
+  :after magit
+  :hook (magit-mode . magit-delta-mode))
+
 (defconst cq-gptel-openrouter-web-search-tool-name "openrouter_web_search"
     "Name of the gptel tool entry that enables OpenRouter web search.")
 
