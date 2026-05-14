@@ -181,43 +181,43 @@
   :after magit
   :hook (magit-mode . magit-delta-mode))
 
-(defconst cq-gptel-openrouter-web-search-tool-name "openrouter_web_search"
-    "Name of the gptel tool entry that enables OpenRouter web search.")
-
-  (defconst cq-gptel-openrouter-web-search-tool
-    '(:type "openrouter:web_search"
-      :parameters (:max_results 3
-                   :max_total_results 3
-                   :search_context_size "low"))
-    "OpenRouter server-tool spec used when web search is enabled.")
-
-  (defun cq-gptel--openrouter-web-search-tool-p (tool)
-    "Return non-nil when TOOL is the OpenRouter web search sentinel."
-    (equal (gptel-tool-name tool) cq-gptel-openrouter-web-search-tool-name))
-
-  (defun cq-gptel-toggle-web-search (&optional arg)
-    "Toggle the OpenRouter web search tool in `gptel-tools'.
-With prefix ARG, enable when ARG is positive and disable otherwise."
-    (interactive "P")
-    (require 'gptel)
-    (let* ((tool (gptel-get-tool (list "openrouter" cq-gptel-openrouter-web-search-tool-name)))
-           (enabled (memq tool gptel-tools))
-           (enable (if arg
-                       (> (prefix-numeric-value arg) 0)
-                     (not enabled))))
-      (setq gptel-tools
-            (if enable
-                (if enabled gptel-tools (cons tool gptel-tools))
-              (delq tool gptel-tools))))
-    (message "OpenRouter web search %s"
-             (if (memq (gptel-get-tool (list "openrouter" cq-gptel-openrouter-web-search-tool-name))
-                       gptel-tools)
-                 "enabled" "disabled")))
-
-  (use-package gptel
+(use-package gptel
     :commands (gptel gptel-send gptel-menu gptel-tools cq-gptel-toggle-web-search)
+    :custom
+    (gptel-default-mode 'org-mode)
+    (gptel-model 'z-ai/glm-5.1)
     :config
-    (require 'cl-lib)
+    (defconst cq-gptel-openrouter-web-search-tool-name "openrouter_web_search"
+      "Name of the gptel tool entry that enables OpenRouter web search.")
+
+    (defconst cq-gptel-openrouter-web-search-tool
+      '(:type "openrouter:web_search"
+        :parameters (:max_results 3
+                     :max_total_results 3
+                     :search_context_size "low"))
+      "OpenRouter server-tool spec used when web search is enabled.")
+
+    (defun cq-gptel--openrouter-web-search-tool-p (tool)
+      "Return non-nil when TOOL is the OpenRouter web search sentinel."
+      (equal (gptel-tool-name tool) cq-gptel-openrouter-web-search-tool-name))
+
+    (defun cq-gptel-toggle-web-search (&optional arg)
+      "Toggle the OpenRouter web search tool in `gptel-tools'.
+With prefix ARG, enable when ARG is positive and disable otherwise."
+      (interactive "P")
+      (let* ((tool (gptel-get-tool (list "openrouter" cq-gptel-openrouter-web-search-tool-name)))
+             (enabled (memq tool gptel-tools))
+             (enable (if arg
+                         (> (prefix-numeric-value arg) 0)
+                       (not enabled))))
+        (setq gptel-tools
+              (if enable
+                  (if enabled gptel-tools (cons tool gptel-tools))
+                (delq tool gptel-tools))))
+      (message "OpenRouter web search %s"
+               (if (memq (gptel-get-tool (list "openrouter" cq-gptel-openrouter-web-search-tool-name))
+                         gptel-tools)
+                   "enabled" "disabled")))
 
     (gptel-make-tool
      :function (lambda ()
@@ -236,22 +236,29 @@ With prefix ARG, enable when ARG is positive and disable otherwise."
             (vconcat (vector cq-gptel-openrouter-web-search-tool) parsed-tools)
           parsed-tools)))
 
-    (setq gptel-backend
-          (gptel-make-openai "OpenRouter"
-            :host "openrouter.ai"
-            :endpoint "/api/v1/chat/completions"
-            :stream t
-            :key gptel-api-key
-            :models '((z-ai/glm-5.1 :request-params (:reasoning (:effort "high")))
-                      nvidia/nemotron-3-super-120b-a12b:free
-                      minimax/minimax-m2.7
-                      anthropic/claude-sonnet-4.6
-                      google/gemini-3-flash-preview
-                      (x-ai/grok-4.3 :request-params (:reasoning (:effort "high")))
-                      (anthropic/claude-opus-4.7 :request-params (:reasoning (:effort "high")))
-                      (openai/gpt-5.5 :request-params (:reasoning (:effort "high")))))
-          gptel-default-mode 'org-mode)
-    (setq gptel-model 'z-ai/glm-5.1))
+    (gptel-make-openai "OpenRouter"
+      :host "openrouter.ai"
+      :endpoint "/api/v1/chat/completions"
+      :stream t
+      :key gptel-api-key
+      :models '((z-ai/glm-5.1 :request-params (:reasoning (:effort "high")))
+                nvidia/nemotron-3-super-120b-a12b:free
+                minimax/minimax-m2.7
+                anthropic/claude-sonnet-4.6
+                google/gemini-3-flash-preview
+                (x-ai/grok-4.3 :request-params (:reasoning (:effort "high")))
+                (anthropic/claude-opus-4.7 :request-params (:reasoning (:effort "high")))
+                (openai/gpt-5.5 :request-params (:reasoning (:effort "high")))))
+
+    (gptel-make-openai "Local (Gemma 3 12B)"
+      :protocol "http"
+      :host "gluon.home.arpa:8080"
+      :endpoint "/v1/chat/completions"
+      :stream t
+      :key "abcd"
+      :models '(gemma3-12b))
+
+    (setq gptel-backend (gptel-get-backend "OpenRouter")))
 
 (add-to-list 'load-path
              (expand-file-name "lisp/gptel-prompts" user-emacs-directory))
