@@ -446,11 +446,24 @@ Returns nil so ERC keeps processing the message normally."
 ;; value would then be silently skipped by custom-theme-set-variables.
 (require 'eglot)
 
+(defun cq-python-eglot-server (&optional _interactive _project)
+  "Return the basedpyright command for local or TRAMP Python buffers."
+  (list (if (file-remote-p default-directory)
+            ;; uv installs this server here on electron and tau.  Use an
+            ;; absolute path because their non-interactive SSH PATH omits it.
+            "/home/codingquark/.local/bin/basedpyright-langserver"
+          "basedpyright-langserver")
+        "--stdio"))
+
 (use-package eglot
   :ensure nil
   :custom
   (eglot-workspace-configuration
-   '(:rust-analyzer (:check (:command "clippy")))))
+   '(:rust-analyzer (:check (:command "clippy"))))
+  :config
+  ;; Prefer basedpyright even when another Python server is installed.
+  (add-to-list 'eglot-server-programs
+               '((python-mode python-ts-mode) . cq-python-eglot-server)))
 
 (defun cq-eglot-format-on-save ()
   "Toggle Eglot formatting before save in Rust buffers."
@@ -471,3 +484,45 @@ Returns nil so ERC keeps processing the message normally."
   :ensure nil
   :mode "\\.rs\\'"
   :hook (rust-ts-mode . eglot-ensure))
+
+;; python-base-mode is the shared parent of python-mode and
+;; python-ts-mode, so one hook covers both, locally and over TRAMP.
+(use-package python
+  :ensure nil
+  :hook (python-base-mode . eglot-ensure))
+
+;; Tree-sitter: let `treesit-install-language-grammar' find the Python
+;; grammar, and remap python-mode only when that grammar is ready.
+(add-to-list 'treesit-language-source-alist
+             '(python "https://github.com/tree-sitter/tree-sitter-python"))
+(when (treesit-language-available-p 'python)
+  (add-to-list 'major-mode-remap-alist '(python-mode . python-ts-mode)))
+
+(use-package flymake-ruff)
+
+;; Ruff lint diagnostics in local Python buffers only: flymake-ruff
+;; reads the local pyproject.toml, so it must not run on remote files.
+(defun cq-flymake-ruff-local-python ()
+  "Load flymake-ruff in local Python file buffers only."
+  (when (and (buffer-file-name)
+             (not (file-remote-p (buffer-file-name))))
+    (flymake-ruff-load)))
+
+(add-hook 'python-base-mode-hook #'cq-flymake-ruff-local-python)
+
+;; Configure Ruff for explicit `M-x apheleia-format-buffer' calls.
+;; Do not enable apheleia-mode: Python formatting is never automatic.
+(use-package apheleia
+  :commands apheleia-format-buffer
+  :config
+  (setf (alist-get 'python-mode apheleia-mode-alist) '(ruff-isort ruff)
+        (alist-get 'python-ts-mode apheleia-mode-alist) '(ruff-isort ruff)))
+
+;; pytest runner. python-mode and python-ts-mode inherit this base map.
+;; Pin to regular MELPA because the stable archive currently advertises
+;; a python-pytest tarball that is no longer available.
+(use-package python-pytest
+  :pin melpa
+  :after python
+  :bind (:map python-base-mode-map
+              ("C-c p" . python-pytest)))
