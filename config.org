@@ -56,6 +56,11 @@ initial login this makes zsh enable its line editor and leave an application
 keypad escape sequence after the prompt, preventing TRAMP from recognizing the
 prompt.  Override =TERM= only for TRAMP's SSH login process.
 
+Tools installed with =uv tool= (basedpyright-langserver, ruff) live in
+=~/.local/bin=, which the non-interactive SSH PATH on =electron= and
+=tau= does not include.  ~tramp-remote-path~ makes them discoverable
+for remote Eglot servers and TRAMP shell commands.
+
 #+BEGIN_SRC emacs-lisp
   (use-package tramp
     :ensure nil
@@ -68,7 +73,11 @@ prompt.  Override =TERM= only for TRAMP's SSH login process.
            "login-args"
            '(("-o" "SetEnv=TERM=dumb")
              ("-l" "%u") ("-p" "%p") ("%c")
-             ("-e" "none") ("%h")))))
+             ("-e" "none") ("%h"))))
+    ;; uv tool installs (basedpyright-langserver, ruff) land in
+    ;; ~/.local/bin, absent from the non-interactive SSH PATH on the
+    ;; remote hosts.
+    (add-to-list 'tramp-remote-path "/home/codingquark/.local/bin" t))
 #+END_SRC
 
 * Appearance

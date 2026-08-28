@@ -34,7 +34,11 @@
          "login-args"
          '(("-o" "SetEnv=TERM=dumb")
            ("-l" "%u") ("-p" "%p") ("%c")
-           ("-e" "none") ("%h")))))
+           ("-e" "none") ("%h"))))
+  ;; uv tool installs (basedpyright-langserver, ruff) land in
+  ;; ~/.local/bin, absent from the non-interactive SSH PATH on the
+  ;; remote hosts.
+  (add-to-list 'tramp-remote-path "/home/codingquark/.local/bin" t))
 
 (use-package emacs
   :init
