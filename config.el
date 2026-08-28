@@ -15,6 +15,14 @@
 ;; Local libraries under ~/.config/emacs/lisp/
 (add-to-list 'load-path (expand-file-name "lisp" user-emacs-directory))
 
+(use-package exec-path-from-shell
+  :demand t
+  :config
+  ;; GUI sessions on macOS lack the login shell PATH;
+  ;; batch and terminal sessions already inherit it.
+  (when (memq window-system '(mac ns))
+    (exec-path-from-shell-initialize)))
+
 (use-package tramp
   :ensure nil
   :defer t
@@ -151,6 +159,14 @@
 (use-package embark-consult
   :after (embark consult)
   :hook (embark-collect-mode . consult-preview-at-point-mode))
+
+(use-package corfu
+  :init
+  (global-corfu-mode 1)
+  :custom
+  ;; Explicit-only completion: popup on TAB / C-M-i, never on idle.
+  (corfu-auto nil)
+  (corfu-cycle t))
 
 (use-package which-key
   :init
@@ -422,11 +438,33 @@ Returns nil so ERC keeps processing the message normally."
   :config
   (keymap-set global-map "C-c h" cq-home-assistant-prefix-map))
 
+;; Require eglot before the :custom keyword is processed: with :ensure
+;; nil use-package defers its require until after :custom, and the
+;; value would then be silently skipped by custom-theme-set-variables.
+(require 'eglot)
+
+(use-package eglot
+  :ensure nil
+  :custom
+  (eglot-workspace-configuration
+   '(:rust-analyzer (:check (:command "clippy")))))
+
+(defun cq-eglot-format-on-save ()
+  "Toggle Eglot formatting before save in Rust buffers."
+  (if eglot-managed-mode
+      (when (derived-mode-p 'rust-ts-mode)
+        (add-hook 'before-save-hook #'eglot-format-buffer nil t))
+    (remove-hook 'before-save-hook #'eglot-format-buffer t)))
+
+(add-hook 'eglot-managed-mode-hook #'cq-eglot-format-on-save)
+
 (use-package lua-mode
   :mode "\\.lua\\'"
   :hook (lua-mode . eglot-ensure)
   :config
   (setq lua-indent-level 2))
 
-(use-package eglot
-  :ensure nil)
+(use-package rust-ts-mode
+  :ensure nil
+  :mode "\\.rs\\'"
+  :hook (rust-ts-mode . eglot-ensure))

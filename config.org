@@ -27,6 +27,27 @@ plus regular MELPA for packages that are only published there.
 (add-to-list 'load-path (expand-file-name "lisp" user-emacs-directory))
 #+END_SRC
 
+* Environment
+
+macOS GUI Emacs (launched from Finder or the Dock) receives a minimal
+default ~PATH~ that misses =~/.cargo/bin= and =/opt/homebrew/bin=, so
+Eglot cannot find rust-analyzer (the "Searching for program" warning)
+and cargo, lua-language-server and terminal-notifier would fail the
+same way. ~exec-path-from-shell~ imports the login shell's ~PATH~ into
+both ~exec-path~ and the ~PATH~ environment variable for subprocesses.
+It must run early: the ERC section below resolves terminal-notifier
+with ~executable-find~ at config load time.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package exec-path-from-shell
+    :demand t
+    :config
+    ;; GUI sessions on macOS lack the login shell PATH;
+    ;; batch and terminal sessions already inherit it.
+    (when (memq window-system '(mac ns))
+      (exec-path-from-shell-initialize)))
+#+END_SRC
+
 * Remote Files
 
 The shared SSH configuration forces =TERM=xterm-256color= so interactive
@@ -228,6 +249,31 @@ Set up a modern minibuffer completion stack for navigation, search, and actions.
 (use-package embark-consult
   :after (embark consult)
   :hook (embark-collect-mode . consult-preview-at-point-mode))
+#+END_SRC
+
+** In-buffer completion
+
+[[https://github.com/minade/corfu][Corfu]] is the in-buffer counterpart to the
+minibuffer stack above: it shows candidates in a small overlay at point
+instead of the minibuffer, so completions never pull focus away from the
+code. It uses the same ~completion-at-point~ machinery and
+~completion-styles~, so the Orderless matching configured above applies
+unchanged. Eglot registers a ~completion-at-point~ backend, so
+rust-analyzer candidates flow into the popup with no extra glue.
+
+Completion is explicit-only: the popup appears when you request it
+(~TAB~ / ~C-M-i~), never on idle. ~corfu-auto~ is ~nil~ by default; the
+~:custom~ below states that intent. ~TAB~ also cycles candidates
+(~corfu-cycle~) rather than leaving them open in a list.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package corfu
+    :init
+    (global-corfu-mode 1)
+    :custom
+    ;; Explicit-only completion: popup on TAB / C-M-i, never on idle.
+    (corfu-auto nil)
+    (corfu-cycle t))
 #+END_SRC
 
 * Help
@@ -715,6 +761,47 @@ changed interactively.
     (keymap-set global-map "C-c h" cq-home-assistant-prefix-map))
 #+END_SRC
 
+* Eglot
+
+~eglot~ is Emacs' built-in language-server frontend, shared by Lua and
+Rust: each language mode starts its own server (lua-language-server and
+rust-analyzer, respectively) when a file is opened.
+
+Server settings must live in the global ~eglot-workspace-configuration~:
+Eglot builds the initial workspace configuration from a scratch buffer
+without running mode hooks, so per-mode buffer-locals are never seen.
+The ~rust-analyzer~ section tells it to run clippy for its check, so
+lint warnings surface as you type; other servers ignore the foreign
+section.
+
+Rust buffers additionally hook in formatting before save: Eglot's
+~eglot-format-buffer~ delegates to rustfmt through rust-analyzer, so
+style stays enforced without a separate formatter step. The hook is
+toggled, so it is removed again when Eglot disconnects, and saving
+never calls into a dead server.
+
+#+BEGIN_SRC emacs-lisp
+  ;; Require eglot before the :custom keyword is processed: with :ensure
+  ;; nil use-package defers its require until after :custom, and the
+  ;; value would then be silently skipped by custom-theme-set-variables.
+  (require 'eglot)
+
+  (use-package eglot
+    :ensure nil
+    :custom
+    (eglot-workspace-configuration
+     '(:rust-analyzer (:check (:command "clippy")))))
+
+  (defun cq-eglot-format-on-save ()
+    "Toggle Eglot formatting before save in Rust buffers."
+    (if eglot-managed-mode
+        (when (derived-mode-p 'rust-ts-mode)
+          (add-hook 'before-save-hook #'eglot-format-buffer nil t))
+      (remove-hook 'before-save-hook #'eglot-format-buffer t)))
+
+  (add-hook 'eglot-managed-mode-hook #'cq-eglot-format-on-save)
+#+END_SRC
+
 * Lua
 
 Edit Lua with ~lua-mode~ and let Eglot start the language server
@@ -726,7 +813,22 @@ Edit Lua with ~lua-mode~ and let Eglot start the language server
     :hook (lua-mode . eglot-ensure)
     :config
     (setq lua-indent-level 2))
+#+END_SRC
 
-  (use-package eglot
-    :ensure nil)
+* Rust
+
+Edit Rust with the built-in ~rust-ts-mode~ (tree-sitter) and let Eglot
+start rust-analyzer automatically. Diagnostics come from
+rust-analyzer, configured to run clippy for its check so lint
+warnings surface as you type (see ~eglot-workspace-configuration~ in
+the Eglot section). Saving runs rustfmt through Eglot (see
+~cq-eglot-format-on-save~ above). ~rust-ts-mode~'s four-space default
+indent matches rustfmt, so it is intentionally left alone despite the
+global ~tab-width~ of 2.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package rust-ts-mode
+    :ensure nil
+    :mode "\\.rs\\'"
+    :hook (rust-ts-mode . eglot-ensure))
 #+END_SRC

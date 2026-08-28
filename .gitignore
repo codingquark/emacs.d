@@ -70,6 +70,9 @@ dist/
 /elpa/
 /straight/
 
+# Tree-sitter grammars
+/tree-sitter/
+
 # Package-Quickstart
 package-quickstart.el
 
