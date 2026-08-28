@@ -50,23 +50,6 @@ prompt.  Override =TERM= only for TRAMP's SSH login process.
              ("-e" "none") ("%h")))))
 #+END_SRC
 
-* Efrit
-
-[[https://github.com/steveyegge/efrit][Efrit]] is Steve Yegge's AI coding assistant for Emacs — a
-Claude-powered agent that can execute natural language commands,
-explore codebases, and run shell commands. Requires an Anthropic API
-key (see `M-x efrit-doctor` for setup). Zero client-side intelligence:
-Claude makes all decisions, Efrit executes.
-
-#+BEGIN_SRC emacs-lisp
-  ;; Efrit AI coding assistant — local vLLM backend on gluon
-  (add-to-list 'load-path (expand-file-name "efrit/lisp" user-emacs-directory))
-  (require 'efrit)
-  (setq efrit-api-base-url "http://gluon.home.arpa:8001")
-  (setq efrit-api-auth-source-host "gluon.home.arpa")
-  (setq efrit-default-model "Qwen/Qwen3.8-27B")
-#+END_SRC
-
 * Appearance
 ** Toolbars and startup
 

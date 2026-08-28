@@ -28,13 +28,6 @@
            ("-l" "%u") ("-p" "%p") ("%c")
            ("-e" "none") ("%h")))))
 
-;; Efrit AI coding assistant — local vLLM backend on gluon
-(add-to-list 'load-path (expand-file-name "efrit/lisp" user-emacs-directory))
-(require 'efrit)
-(setq efrit-api-base-url "http://gluon.home.arpa:8001")
-(setq efrit-api-auth-source-host "gluon.home.arpa")
-(setq efrit-default-model "Qwen/Qwen3.8-27B")
-
 (use-package emacs
   :init
   ;; Remove UI clutter
