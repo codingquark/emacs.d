@@ -15,6 +15,26 @@
 ;; Local libraries under ~/.config/emacs/lisp/
 (add-to-list 'load-path (expand-file-name "lisp" user-emacs-directory))
 
+(use-package tramp
+  :ensure nil
+  :defer t
+  :init
+  (require 'tramp-cache)
+  (add-to-list
+   'tramp-connection-properties
+   (list (rx bos "/" (or "ssh" "scp") ":")
+         "login-args"
+         '(("-o" "SetEnv=TERM=dumb")
+           ("-l" "%u") ("-p" "%p") ("%c")
+           ("-e" "none") ("%h")))))
+
+;; Efrit AI coding assistant — local vLLM backend on gluon
+(add-to-list 'load-path (expand-file-name "efrit/lisp" user-emacs-directory))
+(require 'efrit)
+(setq efrit-api-base-url "http://gluon.home.arpa:8001")
+(setq efrit-api-auth-source-host "gluon.home.arpa")
+(setq efrit-default-model "Qwen/Qwen3.8-27B")
+
 (use-package emacs
   :init
   ;; Remove UI clutter
@@ -192,9 +212,9 @@
 
     (defconst cq-gptel-openrouter-web-search-tool
       '(:type "openrouter:web_search"
-        :parameters (:max_results 3
-                     :max_total_results 3
-                     :search_context_size "low"))
+        :parameters (:max_results 10
+                     :max_total_results 30
+                     :search_context_size "medium"))
       "OpenRouter server-tool spec used when web search is enabled.")
 
     (defun cq-gptel--openrouter-web-search-tool-p (tool)
@@ -250,15 +270,23 @@ With prefix ARG, enable when ARG is positive and disable otherwise."
                 (anthropic/claude-opus-4.7 :request-params (:reasoning (:effort "high")))
                 (openai/gpt-5.5 :request-params (:reasoning (:effort "high")))))
 
-    (gptel-make-openai "Local (Gemma 3 12B)"
+    (gptel-make-openai "Gluon"
       :protocol "http"
-      :host "gluon.home.arpa:8080"
+      :host "gluon.home.arpa:8002"
       :endpoint "/v1/chat/completions"
       :stream t
       :key "abcd"
-      :models '(gemma3-12b))
+      :models '(deepseek-v4-flash))
 
-    (setq gptel-backend (gptel-get-backend "OpenRouter")))
+    (gptel-make-openai "RunPod"
+      :protocol "https"
+      :host "r8oni7txs50gtx-64411dc2-8000.proxy.runpod.net"
+      :endpoint "/v1/chat/completions"
+      :stream t
+      :key "8b4de23cf50a2c87b2d88e9bf3ed2bc8938224031ec11b8465f047a0e0679c3b"
+      :models '(qwen3-coder-next))
+
+    (setq gptel-backend (gptel-get-backend "Gluon")))
 
 (add-to-list 'load-path
              (expand-file-name "lisp/gptel-prompts" user-emacs-directory))
@@ -436,21 +464,56 @@ Returns nil so ERC keeps processing the message normally."
   (when cq-notmuch-identities
     (setq notmuch-identities cq-notmuch-identities))
 
+  (defvar cq-notmuch-mbsync-config-file (expand-file-name "~/.mbsyncrc")
+    "Path to the mbsync configuration used by `cq-notmuch-sync-and-refresh'.")
+
+  (defun cq-notmuch--mbsync-channels ()
+    "Return mbsync channel names from `cq-notmuch-mbsync-config-file'."
+    (unless (file-readable-p cq-notmuch-mbsync-config-file)
+      (user-error "mbsync config %s not readable" cq-notmuch-mbsync-config-file))
+    (let (channels)
+      (with-temp-buffer
+        (insert-file-contents cq-notmuch-mbsync-config-file)
+        (goto-char (point-min))
+        (while (re-search-forward
+                "^[ \t]*Channel[ \t]+\\([^ \t\n#]+\\)" nil t)
+          (push (match-string-no-properties 1) channels)))
+      (or (nreverse channels)
+          (user-error "No channels found in %s" cq-notmuch-mbsync-config-file))))
+
+  (defun cq-notmuch--run-mbsync-channel (channel buffer)
+    "Run mbsync CHANNEL, appending output to BUFFER.
+Return non-nil when the channel sync succeeds."
+    (with-current-buffer buffer
+      (insert (format "\n=== %s ===\n" channel)))
+    (zerop (call-process "mbsync" nil buffer t channel)))
+
   (defun cq-notmuch-sync-and-refresh ()
-    "Run mbsync, import new mail into notmuch, and refresh notmuch buffers."
+    "Run mbsync per channel, import mail with notmuch, and refresh buffers.
+Syncing channels individually avoids an intermittent SSL EOF bug in isync 1.5.x
+that surfaces when multiple channels share one process."
     (interactive)
     (unless (executable-find "mbsync")
       (user-error "mbsync was not found on PATH"))
-    (let ((buffer (get-buffer-create "*mbsync*")))
-      (message "Syncing mail with mbsync...")
-      (with-current-buffer buffer
-        (erase-buffer))
-      (unless (zerop (call-process "mbsync" nil buffer t "-a"))
+    (let* ((buffer (get-buffer-create "*mbsync*"))
+           (channels (cq-notmuch--mbsync-channels))
+           (failed nil))
+      (with-current-buffer buffer (erase-buffer))
+      (message "Syncing mail with mbsync (%d channel%s)..."
+               (length channels) (if (= (length channels) 1) "" "s"))
+      (dolist (channel channels)
+        (unless (cq-notmuch--run-mbsync-channel channel buffer)
+          (push channel failed)))
+      (when failed
         (display-buffer buffer)
-        (user-error "mbsync failed; see %s" (buffer-name buffer))))
-    (notmuch-poll)
-    (notmuch-refresh-all-buffers)
-    (message "Mail sync complete"))
+        (user-error "mbsync failed for: %s; see %s"
+                    (mapconcat #'identity (nreverse failed) ", ")
+                    (buffer-name buffer)))
+      (message "Importing mail into notmuch...")
+      (notmuch-call-notmuch-process "new")
+      (notmuch-refresh-all-buffers)
+      (message "Mail sync complete (%d channel%s)"
+               (length channels) (if (= (length channels) 1) "" "s"))))
 
   (define-key notmuch-common-keymap "G" #'cq-notmuch-sync-and-refresh)
   (define-key notmuch-common-keymap "M" #'notmuch-mua-new-mail))
@@ -553,3 +616,12 @@ Returns nil so ERC keeps processing the message normally."
   :demand t
   :config
   (keymap-set global-map "C-c h" cq-home-assistant-prefix-map))
+
+(use-package lua-mode
+  :mode "\\.lua\\'"
+  :hook (lua-mode . eglot-ensure)
+  :config
+  (setq lua-indent-level 2))
+
+(use-package eglot
+  :ensure nil)
