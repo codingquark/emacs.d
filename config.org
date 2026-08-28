@@ -111,13 +111,12 @@ server auth file.
 
 ** Theme
 
-Load the Modus Vivendi theme for a clean dark interface.
+Load the Catppuccin theme for a clean dark interface.
 
 #+BEGIN_SRC emacs-lisp
-(use-package modus-themes
-  :bind (("<f5>" . modus-themes-toggle))
-  :init
-  (load-theme 'modus-operandi t))
+  (use-package catppuccin-theme
+    :init
+    (load-theme 'catppuccin :no-confirm))
 #+END_SRC
 
 ** Line Highlighting
