@@ -451,7 +451,7 @@ Returns nil so ERC keeps processing the message normally."
 
 (defun cq-eglot-format-on-save ()
   "Toggle Eglot formatting before save in Rust buffers."
-  (if eglot-managed-mode
+  (if (eglot-managed-p)
       (when (derived-mode-p 'rust-ts-mode)
         (add-hook 'before-save-hook #'eglot-format-buffer nil t))
     (remove-hook 'before-save-hook #'eglot-format-buffer t)))
