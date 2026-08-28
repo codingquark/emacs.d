@@ -202,91 +202,34 @@
   :hook (magit-mode . magit-delta-mode))
 
 (use-package gptel
-    :commands (gptel gptel-send gptel-menu gptel-tools cq-gptel-toggle-web-search)
-    :custom
-    (gptel-default-mode 'org-mode)
-    (gptel-model 'z-ai/glm-5.1)
-    :config
-    (defconst cq-gptel-openrouter-web-search-tool-name "openrouter_web_search"
-      "Name of the gptel tool entry that enables OpenRouter web search.")
+  :commands (gptel gptel-send gptel-menu gptel-tools)
+  :custom
+  (gptel-default-mode 'org-mode)
+  (gptel-model 'z-ai/glm-5.1)
+  :config
+  (gptel-make-openai "OpenRouter"
+    :host "openrouter.ai"
+    :endpoint "/api/v1/chat/completions"
+    :stream t
+    :key gptel-api-key
+    :models '((z-ai/glm-5.1 :request-params (:reasoning (:effort "high")))
+              nvidia/nemotron-3-super-120b-a12b:free
+              minimax/minimax-m2.7
+              anthropic/claude-sonnet-4.6
+              google/gemini-3-flash-preview
+              (x-ai/grok-4.3 :request-params (:reasoning (:effort "high")))
+              (anthropic/claude-opus-4.7 :request-params (:reasoning (:effort "high")))
+              (openai/gpt-5.5 :request-params (:reasoning (:effort "high")))))
 
-    (defconst cq-gptel-openrouter-web-search-tool
-      '(:type "openrouter:web_search"
-        :parameters (:max_results 10
-                     :max_total_results 30
-                     :search_context_size "medium"))
-      "OpenRouter server-tool spec used when web search is enabled.")
+  (gptel-make-openai "Gluon"
+    :protocol "http"
+    :host "gluon.home.arpa:8002"
+    :endpoint "/v1/chat/completions"
+    :stream t
+    :key "abcd"
+    :models '(deepseek-v4-flash))
 
-    (defun cq-gptel--openrouter-web-search-tool-p (tool)
-      "Return non-nil when TOOL is the OpenRouter web search sentinel."
-      (equal (gptel-tool-name tool) cq-gptel-openrouter-web-search-tool-name))
-
-    (defun cq-gptel-toggle-web-search (&optional arg)
-      "Toggle the OpenRouter web search tool in `gptel-tools'.
-With prefix ARG, enable when ARG is positive and disable otherwise."
-      (interactive "P")
-      (let* ((tool (gptel-get-tool (list "openrouter" cq-gptel-openrouter-web-search-tool-name)))
-             (enabled (memq tool gptel-tools))
-             (enable (if arg
-                         (> (prefix-numeric-value arg) 0)
-                       (not enabled))))
-        (setq gptel-tools
-              (if enable
-                  (if enabled gptel-tools (cons tool gptel-tools))
-                (delq tool gptel-tools))))
-      (message "OpenRouter web search %s"
-               (if (memq (gptel-get-tool (list "openrouter" cq-gptel-openrouter-web-search-tool-name))
-                         gptel-tools)
-                   "enabled" "disabled")))
-
-    (gptel-make-tool
-     :function (lambda ()
-                 "OpenRouter web search is handled server-side.")
-     :name cq-gptel-openrouter-web-search-tool-name
-     :description "Allow OpenRouter to run paid web searches when the model decides current information is needed."
-     :args nil
-     :category "openrouter")
-
-    (cl-defmethod gptel--parse-tools :around ((backend gptel-openai) tools)
-      "Translate the OpenRouter web search sentinel into a server tool."
-      (let* ((use-web-search (cl-some #'cq-gptel--openrouter-web-search-tool-p tools))
-             (client-tools (cl-remove-if #'cq-gptel--openrouter-web-search-tool-p tools))
-             (parsed-tools (cl-call-next-method backend client-tools)))
-        (if use-web-search
-            (vconcat (vector cq-gptel-openrouter-web-search-tool) parsed-tools)
-          parsed-tools)))
-
-    (gptel-make-openai "OpenRouter"
-      :host "openrouter.ai"
-      :endpoint "/api/v1/chat/completions"
-      :stream t
-      :key gptel-api-key
-      :models '((z-ai/glm-5.1 :request-params (:reasoning (:effort "high")))
-                nvidia/nemotron-3-super-120b-a12b:free
-                minimax/minimax-m2.7
-                anthropic/claude-sonnet-4.6
-                google/gemini-3-flash-preview
-                (x-ai/grok-4.3 :request-params (:reasoning (:effort "high")))
-                (anthropic/claude-opus-4.7 :request-params (:reasoning (:effort "high")))
-                (openai/gpt-5.5 :request-params (:reasoning (:effort "high")))))
-
-    (gptel-make-openai "Gluon"
-      :protocol "http"
-      :host "gluon.home.arpa:8002"
-      :endpoint "/v1/chat/completions"
-      :stream t
-      :key "abcd"
-      :models '(deepseek-v4-flash))
-
-    (gptel-make-openai "RunPod"
-      :protocol "https"
-      :host "r8oni7txs50gtx-64411dc2-8000.proxy.runpod.net"
-      :endpoint "/v1/chat/completions"
-      :stream t
-      :key "8b4de23cf50a2c87b2d88e9bf3ed2bc8938224031ec11b8465f047a0e0679c3b"
-      :models '(qwen3-coder-next))
-
-    (setq gptel-backend (gptel-get-backend "Gluon")))
+  (setq gptel-backend (gptel-get-backend "Gluon")))
 
 (add-to-list 'load-path
              (expand-file-name "lisp/gptel-prompts" user-emacs-directory))

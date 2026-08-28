@@ -344,60 +344,11 @@ fragile. Setting ~gptel-model~ explicitly makes the default honest.
 
 #+BEGIN_SRC emacs-lisp
     (use-package gptel
-      :commands (gptel gptel-send gptel-menu gptel-tools cq-gptel-toggle-web-search)
+      :commands (gptel gptel-send gptel-menu gptel-tools)
       :custom
       (gptel-default-mode 'org-mode)
       (gptel-model 'z-ai/glm-5.1)
       :config
-      (defconst cq-gptel-openrouter-web-search-tool-name "openrouter_web_search"
-        "Name of the gptel tool entry that enables OpenRouter web search.")
-
-      (defconst cq-gptel-openrouter-web-search-tool
-        '(:type "openrouter:web_search"
-          :parameters (:max_results 10
-                       :max_total_results 30
-                       :search_context_size "medium"))
-        "OpenRouter server-tool spec used when web search is enabled.")
-
-      (defun cq-gptel--openrouter-web-search-tool-p (tool)
-        "Return non-nil when TOOL is the OpenRouter web search sentinel."
-        (equal (gptel-tool-name tool) cq-gptel-openrouter-web-search-tool-name))
-
-      (defun cq-gptel-toggle-web-search (&optional arg)
-        "Toggle the OpenRouter web search tool in `gptel-tools'.
-  With prefix ARG, enable when ARG is positive and disable otherwise."
-        (interactive "P")
-        (let* ((tool (gptel-get-tool (list "openrouter" cq-gptel-openrouter-web-search-tool-name)))
-               (enabled (memq tool gptel-tools))
-               (enable (if arg
-                           (> (prefix-numeric-value arg) 0)
-                         (not enabled))))
-          (setq gptel-tools
-                (if enable
-                    (if enabled gptel-tools (cons tool gptel-tools))
-                  (delq tool gptel-tools))))
-        (message "OpenRouter web search %s"
-                 (if (memq (gptel-get-tool (list "openrouter" cq-gptel-openrouter-web-search-tool-name))
-                           gptel-tools)
-                     "enabled" "disabled")))
-
-      (gptel-make-tool
-       :function (lambda ()
-                   "OpenRouter web search is handled server-side.")
-       :name cq-gptel-openrouter-web-search-tool-name
-       :description "Allow OpenRouter to run paid web searches when the model decides current information is needed."
-       :args nil
-       :category "openrouter")
-
-      (cl-defmethod gptel--parse-tools :around ((backend gptel-openai) tools)
-        "Translate the OpenRouter web search sentinel into a server tool."
-        (let* ((use-web-search (cl-some #'cq-gptel--openrouter-web-search-tool-p tools))
-               (client-tools (cl-remove-if #'cq-gptel--openrouter-web-search-tool-p tools))
-               (parsed-tools (cl-call-next-method backend client-tools)))
-          (if use-web-search
-              (vconcat (vector cq-gptel-openrouter-web-search-tool) parsed-tools)
-            parsed-tools)))
-
       (gptel-make-openai "OpenRouter"
         :host "openrouter.ai"
         :endpoint "/api/v1/chat/completions"
@@ -419,14 +370,6 @@ fragile. Setting ~gptel-model~ explicitly makes the default honest.
         :stream t
         :key "abcd"
         :models '(deepseek-v4-flash))
-
-      (gptel-make-openai "RunPod"
-        :protocol "https"
-        :host "r8oni7txs50gtx-64411dc2-8000.proxy.runpod.net"
-        :endpoint "/v1/chat/completions"
-        :stream t
-        :key "8b4de23cf50a2c87b2d88e9bf3ed2bc8938224031ec11b8465f047a0e0679c3b"
-        :models '(qwen3-coder-next))
 
       (setq gptel-backend (gptel-get-backend "Gluon")))
 #+END_SRC
@@ -452,19 +395,6 @@ text (~.txt~, ~.md~, ~.org~), Emacs Lisp data (~.eld~) and code
     (gptel-prompts-update)
     (gptel-prompts-add-update-watchers))
 #+END_SRC
-
-** Web Search
-Web search is available via OpenRouter's ~openrouter:web_search~ server
-tool, exposed as a normal ~gptel-tools~ entry named
-~openrouter_web_search~. It is disabled by default, so routine chats and
-commit-message generation cannot spend search credits by accident. Toggle
-it with ~M-x gptel-tools~ or use ~M-x cq-gptel-toggle-web-search~ for a
-quick global toggle.
-
-When selected, the tool is translated into OpenRouter's server-tool JSON,
-not a local Emacs function call. Each request lets the model decide whether
-to search. The tool is capped at three results total per request and uses
-low search context to keep OpenRouter search costs bounded.
 
 ** Commit messages with gptel-magit
 
