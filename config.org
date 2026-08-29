@@ -105,14 +105,22 @@ Clean up the interface by removing unnecessary UI elements and configuring the s
 
 ** Emacs Server
 
-Run the Emacs server over TCP so `emacsclient` can connect using the generated
-server auth file.
+Run the Emacs server over TCP on regular hosts so remote `emacsclient` calls
+can use the generated server auth file. Omarchy uses the standard Unix socket
+expected by its local restart and synchronization hooks.
 
 #+BEGIN_SRC emacs-lisp
+  (defconst cq-omarchy-integration-file
+    (expand-file-name "omarchy.el" user-emacs-directory)
+    "Host-provided Omarchy integration shim, when available.")
+
   (use-package server
     :ensure nil
     :init
-    (setq server-use-tcp t)
+    ;; Omarchy's local hooks expect the standard Unix socket. Keep TCP on
+    ;; regular hosts for remote emacsclient access.
+    (setq server-use-tcp
+          (not (file-readable-p cq-omarchy-integration-file)))
     :config
     (unless (or noninteractive (server-running-p))
       (server-start)))
@@ -120,13 +128,16 @@ server auth file.
 
 ** Theme
 
-Load the Catppuccin theme for a clean dark interface.
+Use Modus Vivendi by default and keep the usual manual toggle on regular
+hosts. Omarchy owns the theme on systems where its host integration shim is
+installed; that shim is loaded after the rest of this configuration.
 
 #+BEGIN_SRC emacs-lisp
-  (use-package modus-themes
-    :bind (("<f5>" . modus-themes-toggle))
-    :init
-    (load-theme 'modus-vivendi))
+  (unless (file-readable-p cq-omarchy-integration-file)
+    (use-package modus-themes
+      :bind (("<f5>" . modus-themes-toggle))
+      :init
+      (load-theme 'modus-vivendi)))
 #+END_SRC
 
 ** Line Highlighting
@@ -1013,4 +1024,18 @@ recomputation entirely.
   (use-package ibuffer-projectile
     :after projectile
     :hook (ibuffer-mode . ibuffer-projectile-set-filter-groups))
+#+END_SRC
+
+* Omarchy Integration
+
+Omarchy supplies a user-local shim that tracks its active theme and font. Load
+it last so the shared configuration initializes first while Omarchy remains the
+appearance authority on that host. The file is absent on regular hosts.
+
+#+BEGIN_SRC emacs-lisp
+  (when (file-readable-p cq-omarchy-integration-file)
+    (mapc #'disable-theme custom-enabled-themes)
+    (load cq-omarchy-integration-file nil 'nomessage)
+    ;; Avoid switching away from the Omarchy-managed theme independently.
+    (global-unset-key (kbd "<f5>")))
 #+END_SRC

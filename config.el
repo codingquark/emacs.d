@@ -56,18 +56,26 @@
   ;; (setq initial-buffer-choice (lambda () (dired "~/Documents/notes")))
   )
 
+(defconst cq-omarchy-integration-file
+  (expand-file-name "omarchy.el" user-emacs-directory)
+  "Host-provided Omarchy integration shim, when available.")
+
 (use-package server
   :ensure nil
   :init
-  (setq server-use-tcp t)
+  ;; Omarchy's local hooks expect the standard Unix socket. Keep TCP on
+  ;; regular hosts for remote emacsclient access.
+  (setq server-use-tcp
+        (not (file-readable-p cq-omarchy-integration-file)))
   :config
   (unless (or noninteractive (server-running-p))
     (server-start)))
 
-(use-package modus-themes
-  :bind (("<f5>" . modus-themes-toggle))
-  :init
-  (load-theme 'modus-vivendi))
+(unless (file-readable-p cq-omarchy-integration-file)
+  (use-package modus-themes
+    :bind (("<f5>" . modus-themes-toggle))
+    :init
+    (load-theme 'modus-vivendi)))
 
 (use-package lin
   :custom
@@ -570,3 +578,9 @@ Returns nil so ERC keeps processing the message normally."
 (use-package ibuffer-projectile
   :after projectile
   :hook (ibuffer-mode . ibuffer-projectile-set-filter-groups))
+
+(when (file-readable-p cq-omarchy-integration-file)
+  (mapc #'disable-theme custom-enabled-themes)
+  (load cq-omarchy-integration-file nil 'nomessage)
+  ;; Avoid switching away from the Omarchy-managed theme independently.
+  (global-unset-key (kbd "<f5>")))
