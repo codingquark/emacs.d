@@ -87,6 +87,22 @@
 
 (use-package emacs
   :init
+  (setq-default mode-line-format
+                '("%*"
+                  (:eval (when (file-remote-p default-directory) "@"))
+                  " "
+                  mode-line-buffer-identification
+                  "%e"
+                  "%[" "%n" "%]"
+                  mode-line-format-right-align
+                  (vc-mode ("  " vc-mode))
+                  (flymake-mode ("  " flymake-mode-line-counters))
+                  "  "
+                  mode-name
+                  " L%l:C%c")))
+
+(use-package emacs
+  :init
   ;; Indentation
   (setq-default indent-tabs-mode nil)
   (setq-default tab-width 2)
@@ -538,8 +554,19 @@ Returns nil so ERC keeps processing the message normally."
               ("C-c p" . python-pytest)))
 
 (use-package projectile
+  :init
+  (setq projectile-dynamic-mode-line nil)
+  (setq-default projectile--mode-line "")
   :config
   (projectile-mode +1)
   (define-key projectile-mode-map (kbd "s-p") 'projectile-command-map)
   (setq projectile-project-search-path
         '("~/workspace" "~/.config" "~/Projects" "~/Work")))
+
+;; Group ibuffer buffers by Projectile project root. Each open
+;; project gets its own section (named "Projectile: <name>"), and
+;; buffers without a project fall into the default group. Rebuilds
+;; the groups every time an ibuffer window is created.
+(use-package ibuffer-projectile
+  :after projectile
+  :hook (ibuffer-mode . ibuffer-projectile-set-filter-groups))
