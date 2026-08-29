@@ -35,6 +35,7 @@ flycheck_*.el
 # Projectile
 .projectile
 /projects
+/projectile-bookmarks.eld
 
 # Directory configuration
 .dir-locals.el
