@@ -880,10 +880,13 @@ glue. The server is installed once per machine (=uv tool install
 basedpyright=): GUI sessions find it on PATH via
 ~exec-path-from-shell~; on the remote hosts (=electron=, =tau=) the same
 =~/.local/bin= install is reachable through ~tramp-remote-path~ (see
-the Remote Files section). Per-project type-checking and venv settings
-belong in the project's =pyrightconfig.json= or =[tool.basedpyright]=
-in =pyproject.toml= (=venvPath = "."=, =venv = ".venv"=), not in this
-global config.
+the Remote Files section). Basedpyright automatically uses a =.venv=
+at the project root. This matches uv's default project layout, so no
+per-project environment configuration is normally needed. Use the
+project's =pyrightconfig.json= or =[tool.basedpyright]= in
+=pyproject.toml= for type-checking policy or when the environment lives
+at a nonstandard location, rather than putting project-specific settings
+in this global config.
 
 Inlay hints start disabled in Python buffers. Toggle inferred types and
 argument names for the current buffer with ~M-x
