@@ -64,9 +64,10 @@
   (unless (or noninteractive (server-running-p))
     (server-start)))
 
-(use-package catppuccin-theme
+(use-package modus-themes
+  :bind (("<f5>" . modus-themes-toggle))
   :init
-  (load-theme 'catppuccin :no-confirm))
+  (load-theme 'modus-vivendi))
 
 (use-package lin
   :custom
