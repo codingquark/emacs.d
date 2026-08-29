@@ -73,6 +73,9 @@ dist/
 # Tree-sitter grammars
 /tree-sitter/
 
+# Native compilation cache (per Emacs build)
+/eln-cache/
+
 # Package-Quickstart
 package-quickstart.el
 
