@@ -933,3 +933,17 @@ point it at the project interpreter by setting
     :bind (:map python-base-mode-map
                 ("C-c p" . python-pytest)))
 #+END_SRC
+
+* Projects
+
+Discover projects from usual directories across different hosts. Some
+of these may not exist on "this" machine.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package projectile
+    :config
+    (projectile-mode +1)
+    (define-key projectile-mode-map (kbd "s-p") 'projectile-command-map)
+    (setq projectile-project-search-path
+          '("~/workspace" "~/.config" "~/Projects" "~/Work")))
+#+END_SRC

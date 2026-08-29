@@ -527,3 +527,10 @@ Returns nil so ERC keeps processing the message normally."
   :after python
   :bind (:map python-base-mode-map
               ("C-c p" . python-pytest)))
+
+(use-package projectile
+  :config
+  (projectile-mode +1)
+  (define-key projectile-mode-map (kbd "s-p") 'projectile-command-map)
+  (setq projectile-project-search-path
+        '("~/workspace" "~/.config" "~/Projects" "~/Work")))
