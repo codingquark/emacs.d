@@ -10,9 +10,9 @@
      "6dcf1ca4c7432773084b9d52649ee5eb2c663131c4c06859f648dea98d9acb3e"
      default))
  '(package-selected-packages
-   '(apheleia catppuccin-theme dash denote-journal denote-menu
-              elfeed embark-consult flymake-ruff gptel-magit
-              gptel-prompts helpful lin marginalia markdown-mode
+   '(apheleia catppuccin-theme dash denote-journal denote-menu elfeed
+              embark-consult flymake-ruff gptel-magit gptel-prompts
+              helpful ibuffer-projectile lin marginalia markdown-mode
               modus-themes olivetti orderless prescient project
               projectile python-pytest s transient vertico
               vertico-prescient)))
