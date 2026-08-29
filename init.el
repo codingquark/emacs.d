@@ -13,11 +13,11 @@
      "6dcf1ca4c7432773084b9d52649ee5eb2c663131c4c06859f648dea98d9acb3e"
      default))
  '(package-selected-packages
-   '(apheleia catppuccin-theme dash denote-journal denote-menu elfeed
-              embark-consult flymake-ruff gptel-magit gptel-prompts
-              helpful lin marginalia markdown-mode modus-themes
-              olivetti orderless prescient project python-pytest s
-              transient vertico vertico-prescient)))
+   '(apheleia catppuccin-theme dash denote-journal denote-menu
+              elfeed embark-consult flymake-ruff gptel-magit
+              gptel-prompts helpful lin marginalia markdown-mode
+              modus-themes olivetti orderless prescient project
+              python-pytest s transient vertico vertico-prescient)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
