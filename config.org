@@ -815,6 +815,15 @@ never calls into a dead server.
     (add-to-list 'eglot-server-programs
                  '((python-mode python-ts-mode) . cq-python-eglot-server)))
 
+  (defun cq-eglot-disable-python-inlay-hints ()
+    "Keep Eglot inlay hints off initially in Python buffers."
+    (when (and (eglot-managed-p)
+               (derived-mode-p 'python-base-mode))
+      (eglot-inlay-hints-mode -1)))
+
+  (add-hook 'eglot-managed-mode-hook
+            #'cq-eglot-disable-python-inlay-hints)
+
   (defun cq-eglot-format-on-save ()
     "Toggle Eglot formatting before save in Rust buffers."
     (if (eglot-managed-p)
@@ -875,6 +884,10 @@ the Remote Files section). Per-project type-checking and venv settings
 belong in the project's =pyrightconfig.json= or =[tool.basedpyright]=
 in =pyproject.toml= (=venvPath = "."=, =venv = ".venv"=), not in this
 global config.
+
+Inlay hints start disabled in Python buffers. Toggle inferred types and
+argument names for the current buffer with ~M-x
+eglot-inlay-hints-mode~.
 
 Ruff (installed with =uv tool install ruff=) provides lint diagnostics
 through ~flymake-ruff~ in local Python buffers. Formatting is manual:

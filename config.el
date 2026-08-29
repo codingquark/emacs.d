@@ -466,6 +466,15 @@ Returns nil so ERC keeps processing the message normally."
   (add-to-list 'eglot-server-programs
                '((python-mode python-ts-mode) . cq-python-eglot-server)))
 
+(defun cq-eglot-disable-python-inlay-hints ()
+  "Keep Eglot inlay hints off initially in Python buffers."
+  (when (and (eglot-managed-p)
+             (derived-mode-p 'python-base-mode))
+    (eglot-inlay-hints-mode -1)))
+
+(add-hook 'eglot-managed-mode-hook
+          #'cq-eglot-disable-python-inlay-hints)
+
 (defun cq-eglot-format-on-save ()
   "Toggle Eglot formatting before save in Rust buffers."
   (if (eglot-managed-p)
