@@ -49,11 +49,18 @@
 
   ;; Startup configuration
   (setq inhibit-startup-message t)
-  (setq initial-major-mode 'org-mode)
-  (setq initial-scratch-message "")
+  (setq initial-scratch-message nil)
+  (setq initial-buffer-choice
+        (lambda ()
+          (require 'denote-journal)
+          (denote-journal-new-or-existing-entry)))
 
-  ;; Start in denote directory
-  ;; (setq initial-buffer-choice (lambda () (dired "~/Documents/notes")))
+  (defun cq-kill-initial-scratch-buffer ()
+    "Kill the unused initial scratch buffer."
+    (when-let* ((buffer (get-buffer "*scratch*")))
+      (kill-buffer buffer)))
+
+  (add-hook 'emacs-startup-hook #'cq-kill-initial-scratch-buffer)
   )
 
 (defconst cq-omarchy-integration-file
