@@ -180,8 +180,10 @@ Keep the mode line minimal. The left side carries the signals that are easy
 to miss: ~%*~ for modified/read-only state, an ~@~ only for remote buffers,
 and the buffer name (hovering shows the full path). ~%e~ retains the
 warning, while ~%[~ and ~%]~ retain recursive-edit state and ~%n~ retains the
-narrowing indicator without a per-redisplay function. The right side is
-right-aligned and only grows when something is active: the cached VC branch
+narrowing indicator without a per-redisplay function. ERC's tracked-channel
+indicator is included directly, without restoring other minor-mode lighters.
+The right side is right-aligned and only grows when something is active: the
+cached VC branch
 (~vc-mode~, updated by the VC hooks — never ~vc-status~), the Flymake
 diagnostic counters (the counters construct alone, so no title or exception
 string when idle), the major mode, and the exact line and column. Minor-mode
@@ -199,6 +201,7 @@ package is involved — plain Emacs built-ins.
                     mode-line-buffer-identification
                     "%e"
                     "%[" "%n" "%]"
+                    erc-modified-channels-object
                     mode-line-format-right-align
                     (vc-mode ("  " vc-mode))
                     (flymake-mode ("  " flymake-mode-line-counters))

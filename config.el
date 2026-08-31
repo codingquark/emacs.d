@@ -102,6 +102,7 @@
                   mode-line-buffer-identification
                   "%e"
                   "%[" "%n" "%]"
+                  erc-modified-channels-object
                   mode-line-format-right-align
                   (vc-mode ("  " vc-mode))
                   (flymake-mode ("  " flymake-mode-line-counters))
