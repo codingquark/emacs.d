@@ -145,6 +145,14 @@
   :hook ((dired-mode . denote-dired-mode)
          (dired-mode . dired-hide-details-mode)))
 
+(use-package nerd-icons
+  :custom
+  (nerd-icons-font-family "JetBrainsMono Nerd Font Mono"))
+
+(use-package nerd-icons-dired
+  :after (dired nerd-icons)
+  :hook (dired-mode . nerd-icons-dired-mode))
+
 (use-package vertico
   :init
   (vertico-mode 1)

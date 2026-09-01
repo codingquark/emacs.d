@@ -249,13 +249,21 @@ Configure basic editor behavior including indentation, backups, and visual aids.
 
 ** Dired
 
-Configure dired with denote integration.
+Configure dired with denote integration and file-type icons.
 
 #+BEGIN_SRC emacs-lisp
 (use-package dired
   :ensure nil
   :hook ((dired-mode . denote-dired-mode)
          (dired-mode . dired-hide-details-mode)))
+
+(use-package nerd-icons
+  :custom
+  (nerd-icons-font-family "JetBrainsMono Nerd Font Mono"))
+
+(use-package nerd-icons-dired
+  :after (dired nerd-icons)
+  :hook (dired-mode . nerd-icons-dired-mode))
 #+END_SRC
 
 * Completion
