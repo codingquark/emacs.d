@@ -325,6 +325,7 @@ Hosts override this in `cq-private-fonts-file'.")
 (use-package erc
   :ensure nil
   :commands (erc erc-tls cq-erc-libera)
+  :bind (("C-c i" . cq-erc-libera))
   :custom
   (erc-nick "codingquark")
   (erc-user-full-name "codingquark")

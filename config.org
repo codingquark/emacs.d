@@ -619,10 +619,13 @@ messages matching your nick and private queries; a hook then shells out to
 the notifier. Fired only for background buffers so an active channel window
 does not spam the notification center.
 
+Connect with ~C-c i~ (~cq-erc-libera~).
+
 #+BEGIN_SRC emacs-lisp
   (use-package erc
     :ensure nil
     :commands (erc erc-tls cq-erc-libera)
+    :bind (("C-c i" . cq-erc-libera))
     :custom
     (erc-nick "codingquark")
     (erc-user-full-name "codingquark")
