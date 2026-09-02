@@ -93,12 +93,28 @@
 (defconst cq-variable-pitch-font "Charter"
   "Font family used by variable-pitch faces.")
 
+(defvar cq-font-family "JetBrainsMono Nerd Font"
+  "Default font family for the `default' face.
+Hosts override this in `cq-private-fonts-file'.")
+
+(defvar cq-font-height 160
+  "Default height for the `default' face, in tenths of a point.
+Hosts override this in `cq-private-fonts-file'.")
+
+(defvar cq-private-fonts-file
+  (expand-file-name "private/fonts.el" user-emacs-directory)
+  "Host-local font overrides, absent on hosts that keep the defaults.")
+
+(load cq-private-fonts-file 'noerror 'nomessage)
+
 (when (find-font (font-spec :family cq-variable-pitch-font))
   ;; Reading-oriented modes like elfeed-show rely on `variable-pitch`.
   (set-face-attribute 'variable-pitch nil :family cq-variable-pitch-font))
 
-(when (or (string= system-name "muon.local") (string= system-name "photon"))
-  (set-face-attribute 'default nil :font "IBM Plex Mono" :height 160))
+(when (find-font (font-spec :family cq-font-family))
+  (set-face-attribute 'default nil
+                      :family cq-font-family
+                      :height cq-font-height))
 
 (use-package emacs
   :init
