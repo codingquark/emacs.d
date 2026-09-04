@@ -156,6 +156,12 @@ Hosts override this in `cq-private-fonts-file'.")
   :bind
   ("C-x C-b" . ibuffer))
 
+(use-package flyspell
+  :ensure nil
+  :hook (text-mode . flyspell-mode)
+  :custom
+  (ispell-program-name "aspell"))
+
 (use-package dired
   :ensure nil
   :hook ((dired-mode . denote-dired-mode)

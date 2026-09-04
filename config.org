@@ -274,6 +274,19 @@ Configure basic editor behavior including indentation, backups, and visual aids.
   ("C-x C-b" . ibuffer))
 #+END_SRC
 
+** Spelling
+
+Use built-in Flyspell with Aspell for spell checking in prose-oriented modes
+derived from ~text-mode~, including plain text, Org, and Markdown.
+
+#+BEGIN_SRC emacs-lisp
+(use-package flyspell
+  :ensure nil
+  :hook (text-mode . flyspell-mode)
+  :custom
+  (ispell-program-name "aspell"))
+#+END_SRC
+
 ** Dired
 
 Configure dired with denote integration and file-type icons.
