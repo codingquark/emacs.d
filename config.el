@@ -279,6 +279,7 @@ Hosts override this in `cq-private-fonts-file'.")
                  '(magit-project-status "Magit" ?m) t)))
 
 (use-package magit-delta
+  :if (executable-find "delta")
   :after magit
   :hook (magit-mode . magit-delta-mode))
 

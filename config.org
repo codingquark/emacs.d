@@ -437,7 +437,9 @@ Persist useful session state across restarts and make window layouts undoable.
 
 * Git
 
-Set up Magit for repository status and everyday Git workflows.
+Set up Magit for repository status and everyday Git workflows. Enable
+Delta highlighting only on hosts with the =delta= executable
+installed.
 
 #+BEGIN_SRC emacs-lisp
 (use-package magit
@@ -449,6 +451,7 @@ Set up Magit for repository status and everyday Git workflows.
                  '(magit-project-status "Magit" ?m) t)))
 
 (use-package magit-delta
+  :if (executable-find "delta")
   :after magit
   :hook (magit-mode . magit-delta-mode))
 #+END_SRC
