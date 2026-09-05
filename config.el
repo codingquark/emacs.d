@@ -78,11 +78,12 @@
   (unless (or noninteractive (server-running-p))
     (server-start)))
 
-(unless (file-readable-p cq-omarchy-integration-file)
-  (use-package modus-themes
-    :bind (("<f5>" . modus-themes-toggle))
-    :init
-    (load-theme 'modus-vivendi)))
+(use-package modus-themes
+  :demand t
+  :bind (("<f5>" . modus-themes-toggle))
+  :config
+  (unless (file-readable-p cq-omarchy-integration-file)
+    (load-theme 'modus-vivendi t)))
 
 (use-package lin
   :custom
@@ -624,7 +625,26 @@ Returns nil so ERC keeps processing the message normally."
   :hook (ibuffer-mode . ibuffer-projectile-set-filter-groups))
 
 (when (file-readable-p cq-omarchy-integration-file)
-  (mapc #'disable-theme custom-enabled-themes)
+  (defun cq-omarchy-apply-modus-theme ()
+    "Apply the Modus theme matching Omarchy's current appearance."
+    (interactive)
+    (let* ((mode (when (executable-find "omarchy-theme-color")
+                   (with-temp-buffer
+                     (when (eq 0 (call-process
+                                  "omarchy-theme-color" nil t nil
+                                  "--file" (expand-file-name
+                                            "colors.toml" omarchy-theme-directory)
+                                  "mode"))
+                       (string-trim (buffer-string))))))
+           (light (if (member mode '("light" "dark"))
+                      (equal mode "light")
+                    (omarchy-light-theme-p)))
+           (theme (if light 'modus-operandi 'modus-vivendi)))
+      (unless (equal custom-enabled-themes (list theme))
+        (mapc #'disable-theme custom-enabled-themes)
+        (load-theme theme t))))
+
+  (advice-add 'omarchy-apply-theme :override #'cq-omarchy-apply-modus-theme)
   (load cq-omarchy-integration-file nil 'nomessage)
   ;; Avoid switching away from the Omarchy-managed theme independently.
   (global-unset-key (kbd "<f5>")))

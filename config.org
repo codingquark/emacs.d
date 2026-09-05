@@ -135,16 +135,17 @@ expected by its local restart and synchronization hooks.
 
 ** Theme
 
-Use Modus Vivendi by default and keep the usual manual toggle on regular
-hosts. Omarchy owns the theme on systems where its host integration shim is
-installed; that shim is loaded after the rest of this configuration.
+Use Modus Vivendi by default and keep the usual manual toggle on
+regular hosts. On Omarchy, select Modus Operandi or Modus Vivendi from
+the desktop's light or dark appearance through the integration below.
 
 #+BEGIN_SRC emacs-lisp
-  (unless (file-readable-p cq-omarchy-integration-file)
-    (use-package modus-themes
-      :bind (("<f5>" . modus-themes-toggle))
-      :init
-      (load-theme 'modus-vivendi)))
+  (use-package modus-themes
+    :demand t
+    :bind (("<f5>" . modus-themes-toggle))
+    :config
+    (unless (file-readable-p cq-omarchy-integration-file)
+      (load-theme 'modus-vivendi t)))
 #+END_SRC
 
 ** Line Highlighting
@@ -1095,12 +1096,33 @@ recomputation entirely.
 * Omarchy Integration
 
 Omarchy supplies a user-local shim that tracks its active theme and font. Load
-it last so the shared configuration initializes first while Omarchy remains the
-appearance authority on that host. The file is absent on regular hosts.
+it last and override its theme application to use Modus. Advice survives the
+shim reloads performed by Omarchy's theme and font hooks. Use Omarchy's color
+resolver for light/dark detection, with the shim's predicate as a fallback on
+older installations. The shim is absent on regular hosts.
 
 #+BEGIN_SRC emacs-lisp
   (when (file-readable-p cq-omarchy-integration-file)
-    (mapc #'disable-theme custom-enabled-themes)
+    (defun cq-omarchy-apply-modus-theme ()
+      "Apply the Modus theme matching Omarchy's current appearance."
+      (interactive)
+      (let* ((mode (when (executable-find "omarchy-theme-color")
+                     (with-temp-buffer
+                       (when (eq 0 (call-process
+                                    "omarchy-theme-color" nil t nil
+                                    "--file" (expand-file-name
+                                              "colors.toml" omarchy-theme-directory)
+                                    "mode"))
+                         (string-trim (buffer-string))))))
+             (light (if (member mode '("light" "dark"))
+                        (equal mode "light")
+                      (omarchy-light-theme-p)))
+             (theme (if light 'modus-operandi 'modus-vivendi)))
+        (unless (equal custom-enabled-themes (list theme))
+          (mapc #'disable-theme custom-enabled-themes)
+          (load-theme theme t))))
+
+    (advice-add 'omarchy-apply-theme :override #'cq-omarchy-apply-modus-theme)
     (load cq-omarchy-integration-file nil 'nomessage)
     ;; Avoid switching away from the Omarchy-managed theme independently.
     (global-unset-key (kbd "<f5>")))
