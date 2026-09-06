@@ -213,7 +213,6 @@ Hosts override this in `cq-private-fonts-file'.")
          ("M-y" . consult-yank-pop)
          ("M-g g" . consult-goto-line)
          ("M-g i" . consult-imenu)
-         ("M-s g" . consult-grep)
          ("M-s r" . consult-ripgrep)))
 
 (use-package embark

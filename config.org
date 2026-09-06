@@ -348,7 +348,6 @@ Set up a modern minibuffer completion stack for navigation, search, and actions.
          ("M-y" . consult-yank-pop)
          ("M-g g" . consult-goto-line)
          ("M-g i" . consult-imenu)
-         ("M-s g" . consult-grep)
          ("M-s r" . consult-ripgrep)))
 
 (use-package embark
