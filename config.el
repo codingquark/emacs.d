@@ -159,6 +159,10 @@ Hosts override this in `cq-private-fonts-file'.")
   :bind
   ("C-x C-b" . ibuffer))
 
+(use-package hideshow
+  :ensure nil
+  :hook (js-json-mode . hs-minor-mode))
+
 (use-package flyspell
   :ensure nil
   :hook (text-mode . flyspell-mode)

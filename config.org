@@ -277,6 +277,16 @@ Configure basic editor behavior including indentation, backups, and visual aids.
   ("C-x C-b" . ibuffer))
 #+END_SRC
 
+** JSON folding
+
+Enable built-in Hideshow for collapsing JSON objects and arrays.
+
+#+BEGIN_SRC emacs-lisp
+(use-package hideshow
+  :ensure nil
+  :hook (js-json-mode . hs-minor-mode))
+#+END_SRC
+
 ** Spelling
 
 Use built-in Flyspell with Aspell for spell checking in prose-oriented modes
