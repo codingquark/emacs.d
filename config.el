@@ -553,6 +553,10 @@ default spec rather than merging into it."
          ("\\.md\\'" . markdown-mode)
          ("\\.markdown\\'" . markdown-mode)))
 
+(use-package conf-mode
+  :ensure nil
+  :mode ("\\.cnf\\'" . conf-unix-mode))
+
 (use-package cq-home-assistant
   :ensure nil
   :demand t

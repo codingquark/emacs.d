@@ -925,6 +925,16 @@ Configure markdown-mode for editing markdown files.
 
 #+END_SRC
 
+* Configuration Files
+
+Use the built-in Unix configuration mode for MySQL-style =.cnf= files.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package conf-mode
+    :ensure nil
+    :mode ("\\.cnf\\'" . conf-unix-mode))
+#+END_SRC
+
 * Home Assistant
 
 Talk to the local Home Assistant REST API from inside Emacs. The token stays
