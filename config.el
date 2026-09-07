@@ -433,6 +433,48 @@ Returns nil so ERC keeps processing the message normally."
     (interactive)
     (find-file cq-elfeed-feeds-file)))
 
+(defun cq-hey-style-modus-header-faces (&rest _)
+  "Apply the active Modus palette to HEY's header-line elements.
+
+Only the elements that must differ from plain header text get a spec:
+the source name takes `accent-1', the same entry Modus gives
+`elfeed-search-feed-face', so feed names read alike in both clients; the
+refresh time takes the date accent; warnings and failures take Modus's
+UI-area colours, which hold up better than the buffer-area ones on the
+header's `bg-dim'.  Brand, separators, and ordinary state are already dim
+through `shadow', while account, subject, and count stay neutral so
+`header-line-inactive' can dim them in an unfocused window.  Specs
+restate each `defface' inheritance, because a theme spec replaces the
+default spec rather than merging into it."
+  (when-let* ((theme (modus-themes-get-current-theme)))
+    ;; Look the colours up one by one: `modus-themes-with-colors' splices its
+    ;; body into an `eval', which warns about the palette names when compiled.
+    ;; CLASS is the colour-display test that macro binds as `c'.
+    (let ((class '((class color) (min-colors 256))))
+      (custom-theme-set-faces
+       theme
+       `(hey-header-source-face
+         ((,class :inherit (mode-line-buffer-id header-line)
+                  :foreground ,(modus-themes-get-color-value
+                                'accent-1 'with-overrides theme))))
+       `(hey-header-updated-face
+         ((,class :inherit (shadow header-line)
+                  :foreground ,(modus-themes-get-color-value
+                                'date-common 'with-overrides theme))))
+       `(hey-header-warning-face
+         ((,class :inherit (hey-warning-face header-line)
+                  :foreground ,(modus-themes-get-color-value
+                                'modeline-warning 'with-overrides theme))))
+       `(hey-header-error-face
+         ((,class :inherit (hey-error-face header-line)
+                  :foreground ,(modus-themes-get-color-value
+                                'modeline-err 'with-overrides theme))))))))
+
+(add-hook 'modus-themes-after-load-theme-hook
+          #'cq-hey-style-modus-header-faces)
+
+(cq-hey-style-modus-header-faces)
+
 (defconst cq-reading-list-file
   (expand-file-name
    "Documents/notes/20230206T124634--reading-list__lists_productivity.org"
@@ -642,9 +684,12 @@ Returns nil so ERC keeps processing the message normally."
                       (equal mode "light")
                     (omarchy-light-theme-p)))
            (theme (if light 'modus-operandi 'modus-vivendi)))
+      ;; Disable the previous scheme by hand first: Modus only drops the
+      ;; themes it recognises.  `modus-themes-load-theme' then runs the
+      ;; post-load hook that restyles HEY's header line.
       (unless (equal custom-enabled-themes (list theme))
         (mapc #'disable-theme custom-enabled-themes)
-        (load-theme theme t))))
+        (modus-themes-load-theme theme))))
 
   (advice-add 'omarchy-apply-theme :override #'cq-omarchy-apply-modus-theme)
   (load cq-omarchy-integration-file nil 'nomessage)
