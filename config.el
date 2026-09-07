@@ -82,8 +82,10 @@
   :demand t
   :bind (("<f5>" . modus-themes-toggle))
   :config
+  ;; Load through Modus so `modus-themes-after-load-theme-hook' runs; the
+  ;; HEY header colours in `* Reading' are applied from that hook.
   (unless (file-readable-p cq-omarchy-integration-file)
-    (load-theme 'modus-vivendi t)))
+    (modus-themes-load-theme 'modus-vivendi)))
 
 (use-package lin
   :custom
