@@ -576,6 +576,10 @@ default spec rather than merging into it."
   :ensure nil
   :mode ("\\.cnf\\'" . conf-unix-mode))
 
+(use-package yaml-ts-mode
+  :ensure nil
+  :mode "\\.ya?ml\\'")
+
 (use-package cq-home-assistant
   :ensure nil
   :demand t

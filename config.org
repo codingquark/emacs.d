@@ -959,6 +959,10 @@ Use the built-in Unix configuration mode for MySQL-style =.cnf= files.
   (use-package conf-mode
     :ensure nil
     :mode ("\\.cnf\\'" . conf-unix-mode))
+
+  (use-package yaml-ts-mode
+    :ensure nil
+    :mode "\\.ya?ml\\'")
 #+END_SRC
 
 * Home Assistant
