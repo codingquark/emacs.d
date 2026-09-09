@@ -292,6 +292,17 @@ Configure basic editor behavior including indentation, backups, and visual aids.
   ("C-x C-b" . ibuffer))
 #+END_SRC
 
+** EditorConfig
+
+Respect directory-specific formatting rules from ~.editorconfig~ files.
+
+#+BEGIN_SRC emacs-lisp
+(use-package editorconfig
+  :ensure nil
+  :config
+  (editorconfig-mode 1))
+#+END_SRC
+
 ** JSON folding
 
 Enable built-in Hideshow for collapsing JSON objects and arrays.

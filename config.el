@@ -173,6 +173,11 @@ Hosts override this in `cq-private-fonts-file'.")
   :bind
   ("C-x C-b" . ibuffer))
 
+(use-package editorconfig
+  :ensure nil
+  :config
+  (editorconfig-mode 1))
+
 (use-package hideshow
   :ensure nil
   :hook (js-json-mode . hs-minor-mode))
