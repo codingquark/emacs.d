@@ -136,8 +136,9 @@ expected by its local restart and synchronization hooks.
 ** Theme
 
 Use Modus Vivendi by default and keep the usual manual toggle on
-regular hosts. On Omarchy, select Modus Operandi or Modus Vivendi from
-the desktop's light or dark appearance through the integration below.
+regular hosts. Emacs Plus follows macOS appearance changes without polling.
+On Omarchy, select Modus Operandi or Modus Vivendi from the desktop's
+light or dark appearance through the integration below.
 
 #+BEGIN_SRC emacs-lisp
   (use-package modus-themes
@@ -146,8 +147,22 @@ the desktop's light or dark appearance through the integration below.
     :config
     ;; Load through Modus so `modus-themes-after-load-theme-hook' runs; the
     ;; HEY header colours in `* Reading' are applied from that hook.
+    (defun cq-macos-apply-modus-theme (appearance)
+      "Load the Modus theme matching macOS APPEARANCE."
+      (let ((theme (pcase appearance
+                     ('light 'modus-operandi)
+                     ('dark 'modus-vivendi))))
+        (when (and theme (not (equal custom-enabled-themes (list theme))))
+          (modus-themes-load-theme theme))))
     (unless (file-readable-p cq-omarchy-integration-file)
-      (modus-themes-load-theme 'modus-vivendi)))
+      (modus-themes-load-theme 'modus-vivendi)
+      (when (and (eq system-type 'darwin)
+                 (not noninteractive)
+                 (boundp 'ns-system-appearance-change-functions)
+                 (boundp 'ns-system-appearance))
+        (add-hook 'ns-system-appearance-change-functions
+                  #'cq-macos-apply-modus-theme)
+        (cq-macos-apply-modus-theme ns-system-appearance))))
 #+END_SRC
 
 ** Line Highlighting

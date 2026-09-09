@@ -84,8 +84,22 @@
   :config
   ;; Load through Modus so `modus-themes-after-load-theme-hook' runs; the
   ;; HEY header colours in `* Reading' are applied from that hook.
+  (defun cq-macos-apply-modus-theme (appearance)
+    "Load the Modus theme matching macOS APPEARANCE."
+    (let ((theme (pcase appearance
+                   ('light 'modus-operandi)
+                   ('dark 'modus-vivendi))))
+      (when (and theme (not (equal custom-enabled-themes (list theme))))
+        (modus-themes-load-theme theme))))
   (unless (file-readable-p cq-omarchy-integration-file)
-    (modus-themes-load-theme 'modus-vivendi)))
+    (modus-themes-load-theme 'modus-vivendi)
+    (when (and (eq system-type 'darwin)
+               (not noninteractive)
+               (boundp 'ns-system-appearance-change-functions)
+               (boundp 'ns-system-appearance))
+      (add-hook 'ns-system-appearance-change-functions
+                #'cq-macos-apply-modus-theme)
+      (cq-macos-apply-modus-theme ns-system-appearance))))
 
 (use-package lin
   :custom
