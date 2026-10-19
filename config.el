@@ -339,7 +339,7 @@ message.
 
 (use-package erc
   :ensure nil
-  :commands (erc erc-tls cq-erc-libera)
+  :commands (erc erc-tls cq-erc-libera cq-erc-libera-password)
   :bind (("C-c i" . cq-erc-libera))
   :custom
   (erc-nick "codingquark")
@@ -361,6 +361,8 @@ message.
   :config
   (require 'erc-services)
   (require 'erc-match)
+  (require 'erc-sasl)
+  (require 'gnutls)
   (erc-services-mode 1)
   (erc-match-mode 1)
   (erc-track-mode 1)
@@ -368,11 +370,107 @@ message.
 
   (add-hook 'erc-mode-hook (lambda () (display-line-numbers-mode -1)))
 
-  (defun cq-erc-libera ()
-    "Connect to Libera.Chat over TLS, reading creds from auth-source."
+  (defvar cq-erc-libera-key-uri nil
+    "PKCS#11 key URI, configured in private/erc/config.el.")
+  (defvar cq-erc-libera-certificate
+    (expand-file-name "private/erc/libera-yubikey.pem" user-emacs-directory)
+    "Public certificate enrolled with Libera NickServ.")
+
+  (load (expand-file-name "private/erc/config.el" user-emacs-directory)
+        'noerror 'nomessage)
+
+  (defvar-local cq-erc-libera-sasl-authenticated nil)
+
+  (defun cq-erc-libera-tls (name buffer host port &rest parameters)
+    "Open Libera TLS with a YubiKey PIN entered in the minibuffer.
+  Use the usual ERC connector NAME, BUFFER, HOST, PORT and PARAMETERS."
+    (unless (and (equal host "irc.libera.chat") (equal port 6697))
+      (error "This connector is only for irc.libera.chat:6697"))
+    (let ((certificate (plist-get parameters :client-certificate))
+          (debug-on-error nil) (debug-on-quit nil)
+          pin tls process ready)
+      (unless (and certificate (file-readable-p (cadr certificate)))
+        (user-error "Missing Libera certificate: %s" (cadr certificate)))
+      (unwind-protect
+          (progn
+            (setq pin (read-passwd "YubiKey PIV PIN for Libera: "))
+            (when (string-empty-p pin) (user-error "Empty PIN; cancelled"))
+            (message "Touch the YubiKey when it flashes; Emacs may pause while waiting")
+            (redisplay t)
+            (setq tls (gnutls-boot-parameters
+                       :type 'gnutls-x509pki :hostname host :verify-error t
+                       :pass pin :keylist (list certificate))
+                  process (make-network-process
+                           :name name :buffer buffer :host host :service port
+                           :nowait t :noquery t
+                           :tls-parameters (cons 'gnutls-x509pki tls)))
+            (let ((deadline (+ (float-time) 45)))
+              (while (and (eq (process-status process) 'connect)
+                          (< (float-time) deadline))
+                (accept-process-output process 0.1)))
+            (unless (eq (process-status process) 'open)
+              (user-error "YubiKey TLS failed; check the key, PIN and touch, then retry manually"))
+            (setq ready t)
+            process)
+        (when pin (clear-string pin))
+        (when tls (setf (plist-get tls :pass) nil))
+        (when (and process (not ready)) (delete-process process)))))
+
+  (defun cq-erc-libera-sasl-success (_process _response)
+    "Record SASL success before ERC finishes registration."
+    (setq cq-erc-libera-sasl-authenticated t)
+    nil)
+
+  (defun cq-erc-libera-require-sasl (process _response)
+    "Reject registration without successful SASL authentication."
+    (unless cq-erc-libera-sasl-authenticated
+      (delete-process process)
+      (message "Libera disconnected: SASL EXTERNAL did not succeed")
+      t))
+
+  (defun cq-erc-libera-session-setup ()
+    "Keep YubiKey sessions manual and disable password fallback."
+    (when (eq erc-session-connector #'cq-erc-libera-tls)
+      (setq-local erc-server-auto-reconnect nil
+                  erc-auth-source-server-function nil
+                  erc-use-auth-source-for-nickserv-password nil
+                  erc-prompt-for-nickserv-password nil
+                  erc-nickserv-passwords nil
+                  erc-autojoin-timing 'connect
+                  cq-erc-libera-sasl-authenticated nil)
+      (add-hook 'erc-server-903-functions #'cq-erc-libera-sasl-success nil t)
+      (add-hook 'erc-server-001-functions #'cq-erc-libera-require-sasl nil t)))
+
+  (add-hook 'erc-mode-hook #'cq-erc-libera-session-setup)
+
+  (defun cq-erc-libera (&optional nick)
+    "Connect to Libera using YubiKey-backed SASL EXTERNAL.
+  Use optional NICK for a separate connection."
     (interactive)
-    (erc-tls :server "irc.libera.chat" :port 6697
-             :nick erc-nick :full-name erc-user-full-name)))
+    (require 'erc-sasl)
+    (unless (and (stringp cq-erc-libera-key-uri)
+                 (string-prefix-p "pkcs11:" cq-erc-libera-key-uri))
+      (user-error "Set cq-erc-libera-key-uri in private/erc/config.el"))
+    (let ((erc-server-connect-function #'cq-erc-libera-tls)
+          (erc-auth-source-server-function nil)
+          (erc-sasl-mechanism 'external)
+          (erc-sasl-authzid nil)
+          (erc-sasl-password nil)
+          (erc-sasl-auth-source-function nil)
+          (erc-modules (cons 'sasl (remq 'sasl erc-modules))))
+      (erc-tls :server "irc.libera.chat" :port 6697
+               :nick (or nick erc-nick) :user "codingquark"
+               :full-name erc-user-full-name
+               :client-certificate (list cq-erc-libera-key-uri
+                                         cq-erc-libera-certificate))))
+
+  (defun cq-erc-libera-password ()
+    "Explicitly use the previous TLS/NickServ login for recovery."
+    (interactive)
+    (let ((erc-server-connect-function #'erc-open-tls-stream)
+          (erc-modules (remq 'sasl erc-modules)))
+      (erc-tls :server "irc.libera.chat" :port 6697
+               :nick erc-nick :full-name erc-user-full-name))))
 
 (defvar cq-terminal-notifier
     (executable-find "terminal-notifier")
