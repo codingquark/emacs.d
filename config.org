@@ -942,8 +942,9 @@ Configure olivetti for distraction-free writing with centered text.
 
 #+BEGIN_SRC emacs-lisp
   (use-package olivetti
-    :config
-    (setq olivetti-body-width 80))
+    :custom
+    (olivetti-style 'fancy)
+    (olivetti-body-width 80))
 #+END_SRC
 
 ** Markdown

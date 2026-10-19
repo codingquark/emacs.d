@@ -638,8 +638,9 @@ default spec rather than merging into it."
   :after denote)
 
 (use-package olivetti
-  :config
-  (setq olivetti-body-width 80))
+  :custom
+  (olivetti-style 'fancy)
+  (olivetti-body-width 80))
 
 (use-package markdown-mode
   :custom
