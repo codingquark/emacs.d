@@ -500,176 +500,63 @@ installed.
   :hook (magit-mode . magit-delta-mode))
 #+END_SRC
 
-* AI
+** Commit messages with Pi
 
-The AI integration is built around [[https://github.com/karthink/gptel][gptel]], a lightweight LLM client
-that speaks several provider protocols. Rather than subscribe to a
-single vendor, I route everything through [[https://openrouter.ai][OpenRouter]], which re-exports
-dozens of models behind one OpenAI-compatible endpoint. That decision
-drives the rest of this section: the backend is OpenAI-shaped but
-pointed at OpenRouter's host, and the model list is a curated slice of
-what OpenRouter offers.
+The standalone package is developed in =~/workspace/magit-pi=.
 
-A second backend points at a local [[https://github.com/ggml-org/llama.cpp][llama.cpp]] server running Gemma 3
-12B on a LAN machine (gluon). Switch between backends with
-~gptel-menu~.
+In a Magit commit buffer, =M-g= generates a message from the staged diff;
+=C-u M-g= cancels generation. Review the result and finish with the usual
+=C-c C-c=. An existing draft is supplied as context and replaced in one
+undoable edit. Git's comments and verbose diff are preserved. If you edit
+the buffer or change the staged diff during generation, the suggestion
+opens separately instead.
 
-** Backend
+The model is pinned here independently of Pi's interactive default.
+Customize =magit-pi-model= (a full =provider/model-id=),
+=magit-pi-thinking=, =magit-pi-explore=, and =magit-pi-prompt= with
+=M-x customize-group RET magit-pi=. Pi uses its existing authentication.
+The Gluon provider is loaded explicitly through
+=magit-pi-provider-extensions=; other extensions are not discovered.
 
-~gptel-make-openai~ registers a backend and returns the backend
-struct; assigning that return value to ~gptel-backend~ makes it the
-active one for new chats. The API key lives outside this file in
-~gptel-api-key~ (set in a private init fragment) so the config can be
-committed without leaking secrets.
+Repository exploration is enabled here with only the =read=, =grep=,
+=find=, and =ls= tools. Pi may consult relevant callers, tests, and docs
+to explain the change. These tools read the live working tree, including
+unstaged changes, and are not confined to the repository. The prompt keeps
+the staged diff authoritative. Set =magit-pi-explore= to =nil= for the
+package's default behavior: send only the draft and staged diff.
 
-Streaming is left on because in an interactive chat buffer you want
-tokens to appear as they arrive. Note that ~gptel-magit~ will
-selectively override this below, for reasons explained there.
-
-The model list is deliberately short. Additional entries are
-available interactively via ~gptel-menu~. The default model used for
-new requests is ~gptel-model~, which gptel initialises to
-~gpt-4o-mini~ globally --- a name that has nothing to do with the
-OpenRouter backend registered here. gptel does sanitise an
-unsupported model by falling back to the first entry of the active
-backend's list, so things happen to work, but relying on that is
-fragile. Setting ~gptel-model~ explicitly makes the default honest.
+Each invocation is ephemeral: no session persistence, skills, prompt
+templates, automatic context files, or project settings. The diff
+and draft go through stdin to the selected model's provider; exploration
+may send additional file contents. This command requires a nonempty staged
+diff, including when amending. Oversized diffs are rejected rather than
+silently truncated.
 
 #+BEGIN_SRC emacs-lisp
-    (use-package gptel
-      :commands (gptel gptel-send gptel-menu gptel-tools)
-      :custom
-      (gptel-default-mode 'org-mode)
-      (gptel-model 'Qwen/Qwen3.8-27B)
-      :config
-      (gptel-make-openai "OpenRouter"
-        :host "openrouter.ai"
-        :endpoint "/api/v1/chat/completions"
-        :stream t
-        :key gptel-api-key
-        :models '((z-ai/glm-5.3-flash :request-params (:reasoning (:effort "high")))
-                  (deepseek/deepseek-v4-flash-0731 :request-params (:reasoning (:effort "high")))))
-
-      (gptel-make-openai "Gluon"
-        :protocol "http"
-        :host "gluon.home.arpa:8001"
-        :endpoint "/v1/chat/completions"
-        :stream t
-        :key "sk-noop"
-        :models '(Qwen/Qwen3.8-27B))
-
-      (setq gptel-backend (gptel-get-backend "Gluon")))
-#+END_SRC
-
-** Prompts
-
-[[https://github.com/jwiegley/gptel-prompts][gptel-prompts]] manages ~gptel-directives~ as individual files under
-~gptel-prompts-directory~ (defaults to =~/.config/emacs/prompts=).
-Each file becomes a named directive; supported formats include plain
-text (~.txt~, ~.md~, ~.org~), Emacs Lisp data (~.eld~) and code
-(~.el~), JSON (~.json~), and Prompt Poet / Jinja templates (~.poet~,
-~.j2~). File watchers keep ~gptel-directives~ in sync automatically.
-
-#+BEGIN_SRC emacs-lisp
-  (add-to-list 'load-path
-               (expand-file-name "lisp/gptel-prompts" user-emacs-directory))
-
-  (use-package gptel-prompts
+  (use-package magit-pi
+    :load-path "~/workspace/magit-pi"
     :ensure nil
-    :after (gptel)
-    :demand t
-    :config
-    (gptel-prompts-update)
-    (gptel-prompts-add-update-watchers))
-#+END_SRC
+    :after git-commit
+    :bind (:map git-commit-mode-map
+                ("M-g" . magit-pi-generate))
+    :custom
+    ;; (magit-pi-model "openai-codex/gpt-6-astra")
+    (magit-pi-model "gluon/Qwen3.8-Flash-Next")
+    (magit-pi-provider-extensions '("~/.pi/agent/extensions/lan-provider.ts"))
+    (magit-pi-explore t)
+    (magit-pi-debug t)
+    (magit-pi-prompt "
+  Write only a plain-text commit message for the staged diff. Do not use
+  any other formatting.  Use a concrete imperative subject: aim for 50
+  characters, max 72; no trailing period or Conventional Commits prefix.
+  Add a body only for useful rationale, behavior, or tradeoffs. Separate
+  with a blank line; wrap at 72 characters. Explain, don't list files.
 
-** Commit messages with gptel-magit
-
-[[https://github.com/ragnard/gptel-magit][gptel-magit]] hooks into magit so that ~M-g~ in a commit buffer calls
-out to gptel with the staged diff and a commit-message prompt,
-inserting the result into the commit buffer. The plain installation
-would be a one-liner; most of what follows is an advice wrapper
-that exists for a reason worth explaining.
-
-*** Why an advice wrapper is needed
-
-~gptel-magit~ was written against a simple callback contract: gptel
-calls the callback once with the finished assistant message as a
-string, and gptel-magit inserts that string into the commit buffer.
-Two unrelated gptel behaviours break that contract.
-
-The first is generic to *any* streamed response. With streaming on,
-gptel invokes the callback repeatedly, once per text chunk, and a
-final time with ~t~ to signal end-of-stream (see
-~gptel-request.el~ around line 1873). ~gptel-magit~'s insert-once
-callback would therefore fire many times --- inserting partial
-tokens into the commit buffer --- and then explode on the ~t~.
-
-The second is specific to reasoning models. In addition to the text
-stream, gptel exposes reasoning tokens as separate callback events
-packaged as ~(reasoning . TEXT)~ cons cells. ~gptel-magit~ receives
-one of those, tries to ~insert~ it, and dies inside a process
-sentinel with ~char-or-string-p~. Importantly, reasoning events can
-arrive even on a *non-streaming* request: if the final response
-contains a ~<think>~ block, or the backend stashed reasoning in the
-~info~ plist, gptel emits a reasoning callback before the final
-string (see ~gptel-request.el~ around lines 2419 and 2429). Turning
-streaming off therefore does not make the reasoning problem go away.
-
-Note that ~gptel-include-reasoning~ does *not* help here: that
-variable only governs how reasoning is displayed in gptel's own chat
-buffers, not what a user-supplied ~:callback~ receives.
-
-*** Solution: force non-streaming, filter non-strings
-
-Two changes address the two problems, one each. Forcing ~:stream nil~
-solves the chunking problem: gptel's non-streaming path produces a
-single final-answer callback invocation instead of a sequence of
-chunks. That alone is enough to stop ~gptel-magit~ inserting partial
-tokens.
-
-It is *not* enough to stop the reasoning callback. For that, the
-advice wraps the callback in a filter that passes strings through
-and silently drops everything else. This filter is load-bearing, not
-defensive: non-streamed requests still emit ~(reasoning . TEXT)~
-ahead of the final answer whenever reasoning is present, and without
-the filter ~gptel-magit~ would crash on exactly the kind of model
-you most want commit messages from.
-
-There is one subtlety that shapes how the wrapper is constructed.
-~config.el~ is tangled without a ~lexical-binding~ cookie, so a
-plain ~(lambda (response info) ...)~ closing over a local ~cb~ would
-not survive the async gap --- by the time gptel invokes it, the
-~let~ has exited and ~cb~ is unbound. ~apply-partially~ sidesteps
-this by building a real closure through function composition rather
-than variable capture, so it works the same in dynamic and lexical
-scope. The helper it partially applies is therefore a plain named
-function that takes the original callback as an extra first
-argument.
-
-A second detail: ~gptel-magit--request~ takes the prompt as a
-positional first argument and the rest as keyword args, so the
-advice must split ~prompt~ off before touching the plist ---
-otherwise ~plist-get~ would try to read the diff string as a key and
-fail.
-
-#+BEGIN_SRC emacs-lisp
-  (use-package gptel-magit
-    :after (gptel magit)
-    :hook (magit-mode . gptel-magit-install)
-    :config
-    (defun cq-gptel-magit--forward-if-string (cb response info)
-      (when (stringp response)
-        (funcall cb response info)))
-
-    (defun cq-gptel-magit--request-advice (orig-fn prompt &rest args)
-      (let* ((cb (plist-get args :callback))
-             (wrapped (apply-partially #'cq-gptel-magit--forward-if-string cb))
-             (args (plist-put args :stream nil))
-             (args (plist-put args :callback wrapped)))
-        (apply orig-fn prompt args)))
-
-    (advice-add 'gptel-magit--request :around #'cq-gptel-magit--request-advice))
+  The staged diff defines scope; the draft may clarify intent.
+  If tools are available, consult relevant repository callers, tests,
+  or docs only as needed. Keep unstaged working-tree changes out of the
+  message.
+  "))
 #+END_SRC
 
 * IRC

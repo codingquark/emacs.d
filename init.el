@@ -13,11 +13,10 @@
      default))
  '(package-selected-packages
    '(apheleia catppuccin-theme dash denote-journal denote-menu elfeed
-              embark-consult flymake-ruff gptel-magit gptel-prompts
-              helpful ibuffer-projectile lin marginalia markdown-mode
-              modus-themes olivetti orderless prescient project
-              projectile python-pytest s transient vertico
-              vertico-prescient)))
+              embark-consult flymake-ruff helpful ibuffer-projectile
+              lin marginalia markdown-mode modus-themes olivetti
+              orderless prescient project projectile python-pytest s
+              transient vertico vertico-prescient)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.

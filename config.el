@@ -312,57 +312,30 @@ Hosts override this in `cq-private-fonts-file'.")
   :after magit
   :hook (magit-mode . magit-delta-mode))
 
-(use-package gptel
-  :commands (gptel gptel-send gptel-menu gptel-tools)
-  :custom
-  (gptel-default-mode 'org-mode)
-  (gptel-model 'Qwen/Qwen3.8-27B)
-  :config
-  (gptel-make-openai "OpenRouter"
-    :host "openrouter.ai"
-    :endpoint "/api/v1/chat/completions"
-    :stream t
-    :key gptel-api-key
-    :models '((z-ai/glm-5.3-flash :request-params (:reasoning (:effort "high")))
-              (deepseek/deepseek-v4-flash-0731 :request-params (:reasoning (:effort "high")))))
-
-  (gptel-make-openai "Gluon"
-    :protocol "http"
-    :host "gluon.home.arpa:8001"
-    :endpoint "/v1/chat/completions"
-    :stream t
-    :key "sk-noop"
-    :models '(Qwen/Qwen3.8-27B))
-
-  (setq gptel-backend (gptel-get-backend "Gluon")))
-
-(add-to-list 'load-path
-             (expand-file-name "lisp/gptel-prompts" user-emacs-directory))
-
-(use-package gptel-prompts
+(use-package magit-pi
+  :load-path "~/workspace/magit-pi"
   :ensure nil
-  :after (gptel)
-  :demand t
-  :config
-  (gptel-prompts-update)
-  (gptel-prompts-add-update-watchers))
+  :after git-commit
+  :bind (:map git-commit-mode-map
+              ("M-g" . magit-pi-generate))
+  :custom
+  ;; (magit-pi-model "openai-codex/gpt-6-astra")
+  (magit-pi-model "gluon/Qwen3.8-Flash-Next")
+  (magit-pi-provider-extensions '("~/.pi/agent/extensions/lan-provider.ts"))
+  (magit-pi-explore t)
+  (magit-pi-debug t)
+  (magit-pi-prompt "
+Write only a plain-text commit message for the staged diff. Do not use
+any other formatting.  Use a concrete imperative subject: aim for 50
+characters, max 72; no trailing period or Conventional Commits prefix.
+Add a body only for useful rationale, behavior, or tradeoffs. Separate
+with a blank line; wrap at 72 characters. Explain, don't list files.
 
-(use-package gptel-magit
-  :after (gptel magit)
-  :hook (magit-mode . gptel-magit-install)
-  :config
-  (defun cq-gptel-magit--forward-if-string (cb response info)
-    (when (stringp response)
-      (funcall cb response info)))
-
-  (defun cq-gptel-magit--request-advice (orig-fn prompt &rest args)
-    (let* ((cb (plist-get args :callback))
-           (wrapped (apply-partially #'cq-gptel-magit--forward-if-string cb))
-           (args (plist-put args :stream nil))
-           (args (plist-put args :callback wrapped)))
-      (apply orig-fn prompt args)))
-
-  (advice-add 'gptel-magit--request :around #'cq-gptel-magit--request-advice))
+The staged diff defines scope; the draft may clarify intent.
+If tools are available, consult relevant repository callers, tests,
+or docs only as needed. Keep unstaged working-tree changes out of the
+message.
+"))
 
 (use-package erc
   :ensure nil
