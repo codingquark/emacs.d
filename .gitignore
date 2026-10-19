@@ -23,6 +23,7 @@ flycheck_*.el
 
 # Bookmarks
 /bookmarks
+/bookmarks.eld
 
 # Recent files
 /recentf
