@@ -124,14 +124,19 @@ Hosts override this in `cq-private-fonts-file'.")
 
 (load cq-private-fonts-file 'noerror 'nomessage)
 
-(when (find-font (font-spec :family cq-variable-pitch-font))
-  ;; Reading-oriented modes like elfeed-show rely on `variable-pitch`.
-  (set-face-attribute 'variable-pitch nil :family cq-variable-pitch-font))
+(defun cq-apply-frame-fonts (frame)
+  "Apply installed fonts to graphical FRAME."
+  (when (display-graphic-p frame)
+    (when (find-font (font-spec :family cq-variable-pitch-font) frame)
+      ;; Reading-oriented modes like elfeed-show rely on `variable-pitch`.
+      (set-face-attribute 'variable-pitch frame :family cq-variable-pitch-font))
+    (when (find-font (font-spec :family cq-font-family) frame)
+      (set-face-attribute 'default frame
+                          :family cq-font-family
+                          :height cq-font-height))))
 
-(when (find-font (font-spec :family cq-font-family))
-  (set-face-attribute 'default nil
-                      :family cq-font-family
-                      :height cq-font-height))
+(add-hook 'after-make-frame-functions #'cq-apply-frame-fonts)
+(mapc #'cq-apply-frame-fonts (frame-list))
 
 (use-package emacs
   :init
